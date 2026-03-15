@@ -128,8 +128,7 @@ class CompleteScreen(customtkinter.CTkFrame):
         import tkinter as tk
 
         self._canvas = tk.Canvas(self, bg=COLORS["bg"], highlightthickness=0)
-        self._canvas.grid(row=0, column=0, rowspan=8, sticky="nsew")
-        self._canvas.lower()
+        # Don't place until confetti starts — avoids covering widgets
 
     def on_show(self) -> None:
         """Called when this screen becomes visible. Populate summary and celebrate."""
@@ -197,11 +196,11 @@ class CompleteScreen(customtkinter.CTkFrame):
 
     def _start_confetti(self) -> None:
         """Spawn confetti dots that fall and fade."""
-        self._canvas.lift()
+        self._canvas.place(x=0, y=0, relwidth=1.0, relheight=1.0)
+        self._canvas.tkraise()
         for _ in range(40):
             self.after(random.randint(0, 600), self._spawn_dot)
-        # Lower canvas after confetti finishes
-        self.after(3000, self._canvas.lower)
+        self.after(3000, lambda: self._canvas.place_forget())
 
     def _spawn_dot(self) -> None:
         """Create a single confetti dot and animate it."""
