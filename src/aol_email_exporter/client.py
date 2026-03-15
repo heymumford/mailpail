@@ -133,7 +133,7 @@ class AOLClient:
         if filters.unread_only:
             parts["seen"] = False
 
-        return AND(**parts) if parts else AND()
+        return AND(**parts) if parts else "ALL"
 
     @staticmethod
     def _msg_to_record(msg: MailMessage, folder: str) -> EmailRecord:

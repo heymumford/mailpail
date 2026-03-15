@@ -180,9 +180,7 @@ class LoginScreen(customtkinter.CTkFrame):
             session = detect_aol_session()
             if session is not None:
                 self._session_card.grid(row=2, column=0, padx=60, pady=(0, 12), sticky="ew")
-                self._session_label.configure(
-                    text=f"\u2705 We found your AOL session! Email: {session.username}"
-                )
+                self._session_label.configure(text=f"\u2705 We found your AOL session! Email: {session.username}")
                 self._detected_session = session
             else:
                 self._session_card.grid_forget()

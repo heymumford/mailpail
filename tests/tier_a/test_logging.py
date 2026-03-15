@@ -10,7 +10,6 @@ import pytest
 
 from aol_email_exporter.logging_config import setup_logging
 
-
 pytestmark = pytest.mark.tier_a
 
 LOGGER_NAME = "aol_email_exporter"

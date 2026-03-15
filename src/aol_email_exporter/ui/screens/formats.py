@@ -17,25 +17,25 @@ if TYPE_CHECKING:
 _FORMAT_OPTIONS: list[dict[str, str]] = [
     {
         "key": "csv",
-        "icon": "\U0001F4CA",
+        "icon": "\U0001f4ca",
         "title": "Compressed CSV",
         "description": "Small file, great for data analysis",
     },
     {
         "key": "excel",
-        "icon": "\U0001F4CA",
+        "icon": "\U0001f4ca",
         "title": "Excel Spreadsheet",
         "description": "One sheet with all emails",
     },
     {
         "key": "excel-sheets",
-        "icon": "\U0001F4DA",
+        "icon": "\U0001f4da",
         "title": "Excel with Tabs",
         "description": "Emails organized by folder",
     },
     {
         "key": "pdf",
-        "icon": "\U0001F4D1",
+        "icon": "\U0001f4d1",
         "title": "PDF Document",
         "description": "Easy to read and share",
     },
@@ -127,9 +127,7 @@ class FormatScreen(customtkinter.CTkFrame):
             command=self._browse_directory,
         ).grid(row=0, column=2, padx=(0, 20), pady=16)
 
-    def _build_format_card(
-        self, parent: customtkinter.CTkFrame, fmt: dict[str, str]
-    ) -> customtkinter.CTkFrame:
+    def _build_format_card(self, parent: customtkinter.CTkFrame, fmt: dict[str, str]) -> customtkinter.CTkFrame:
         """Build a single format selection card."""
         card = customtkinter.CTkFrame(
             parent,

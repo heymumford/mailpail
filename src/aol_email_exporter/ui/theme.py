@@ -51,16 +51,16 @@ FONTS: dict[str, tuple[str, int]] = {
 }
 
 ICONS: dict[str, str] = {
-    "welcome": "\U0001F4E8",
-    "login": "\U0001F511",
-    "folder": "\U0001F4C1",
-    "filter": "\U0001F50D",
-    "format": "\U0001F4BE",
-    "progress": "\u2B07",
+    "welcome": "\U0001f4e8",
+    "login": "\U0001f511",
+    "folder": "\U0001f4c1",
+    "filter": "\U0001f50d",
+    "format": "\U0001f4be",
+    "progress": "\u2b07",
     "complete": "\u2705",
     "back": "\u2190",
     "next": "\u2192",
-    "error": "\u26A0",
+    "error": "\u26a0",
 }
 
 WIZARD_STEPS: list[str] = [
@@ -79,6 +79,7 @@ ACCEL_PREFIX: str = "Cmd" if _SYSTEM == "Darwin" else "Ctrl"
 # ---------------------------------------------------------------------------
 # Animations
 # ---------------------------------------------------------------------------
+
 
 def fade_in(widget: tk.Widget, steps: int = 10, delay_ms: int = 30) -> None:
     """Animate widget appearance by stepping opacity from 0.0 to 1.0."""

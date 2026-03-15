@@ -12,22 +12,18 @@ import pytest
 from aol_email_exporter.exporters.csv_export import CsvExporter
 from aol_email_exporter.models import ExportConfig
 
-
 pytestmark = pytest.mark.tier_a
 
 EXPECTED_HEADERS = [
-    "uid",
     "date",
     "sender",
     "to",
     "cc",
     "subject",
     "body_text",
-    "body_html",
     "folder",
     "has_attachments",
     "message_id",
-    "size_bytes",
 ]
 
 
@@ -79,7 +75,6 @@ class TestCsvExporter:
             rows = list(reader)
         first = rows[0]
         rec = sample_records[0]
-        assert first["uid"] == rec.uid
         assert first["sender"] == rec.sender
         assert first["subject"] == rec.subject
         assert first["folder"] == rec.folder

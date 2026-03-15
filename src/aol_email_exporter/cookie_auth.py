@@ -1,6 +1,13 @@
 # Copyright (C) 2026+ Eric C. Mumford <eric@mumfordengineering.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+"""Browser cookie extraction for AOL session detection.
+
+Uses ``browser_cookie3`` to probe installed browsers for AOL Mail
+session cookies.  This is best-effort — all errors are swallowed
+and logged at DEBUG level so the app never crashes from cookie issues.
+"""
+
 from __future__ import annotations
 
 import datetime
@@ -17,24 +24,14 @@ _BROWSER_ORDER: list[tuple[str, str]] = [
     ("Chrome", "chrome"),
     ("Firefox", "firefox"),
     ("Edge", "edge"),
-    ("Safari", "safari"),
     ("Opera", "opera"),
     ("Brave", "brave"),
     ("Vivaldi", "vivaldi"),
+    ("Safari", "safari"),
 ]
 
-# Domains that indicate an active AOL session.
-_AOL_DOMAINS: set[str] = {
-    ".aol.com",
-    ".login.aol.com",
-    "login.aol.com",
-    "mail.aol.com",
-}
-
-# Cookie names that signal an authenticated Yahoo/AOL session.
+_AOL_DOMAINS: set[str] = {".aol.com", ".login.aol.com", "login.aol.com", "mail.aol.com"}
 _SESSION_COOKIE_NAMES: set[str] = {"s", "d", "T", "Y"}
-
-# Domains whose mere presence counts as a session indicator.
 _LOGIN_DOMAINS: set[str] = {".login.aol.com", "login.aol.com", "mail.aol.com"}
 
 
@@ -42,35 +39,25 @@ _LOGIN_DOMAINS: set[str] = {".login.aol.com", "login.aol.com", "mail.aol.com"}
 class AOLSession:
     """Detected AOL browser session."""
 
-    username: str  # e.g., "user@aol.com"
-    browser: str  # e.g., "Chrome", "Firefox"
-    cookies: dict[str, str]  # cookie name -> value
+    username: str
+    browser: str
+    cookies: dict[str, str]
     detected_at: datetime.datetime
 
 
 def _is_aol_domain(domain: str) -> bool:
-    """Return True if *domain* belongs to AOL's cookie scope."""
     domain_lower = domain.lower()
     if domain_lower in _AOL_DOMAINS:
         return True
-    if domain_lower.endswith(".aol.com"):
-        return True
-    return False
+    return domain_lower.endswith(".aol.com")
 
 
 def _extract_username_from_d_cookie(value: str) -> str | None:
-    """Try to pull an email or user ID from Yahoo/AOL's ``d`` cookie.
-
-    The ``d`` cookie is a long opaque blob, but historically contains
-    URL-encoded fragments with ``login=<user>`` or ``u=<user>`` pairs.
-    This is best-effort; the format is not documented.
-    """
     try:
         decoded = urllib.parse.unquote(value)
     except Exception:
         return None
 
-    # Look for login=<user@aol.com> or u=<user>
     for pattern in (
         r"login=([A-Za-z0-9_.+-]+@aol\.com)",
         r"\bu=([A-Za-z0-9_.+-]+@aol\.com)",
@@ -87,47 +74,38 @@ def _extract_username_from_d_cookie(value: str) -> str | None:
 
 
 def _extract_username(cookies: dict[str, str]) -> str:
-    """Derive the AOL username from session cookies, or fall back."""
-    # 1. Try the ``d`` cookie (Yahoo/AOL session blob).
     d_val = cookies.get("d")
     if d_val:
         username = _extract_username_from_d_cookie(d_val)
         if username:
             return username
-
-    # 2. Explicit login/user cookies.
     for key in ("login", "user", "userid", "username"):
         val = cookies.get(key)
         if val:
-            if "@" not in val:
-                return f"{val}@aol.com"
-            return val
-
+            return f"{val}@aol.com" if "@" not in val else val
     return "AOL User"
 
 
 def _get_cookiejar(browser_func_name: str) -> CookieJar | None:
-    """Call the appropriate ``rookiepy`` loader, returning None on failure."""
     try:
-        import rookiepy  # type: ignore[import-untyped]
+        import browser_cookie3  # type: ignore[import-untyped]
     except ImportError:
-        logger.debug("rookiepy is not installed — cookie detection unavailable")
+        logger.debug("browser_cookie3 is not installed — cookie detection unavailable")
         return None
 
-    loader = getattr(rookiepy, browser_func_name, None)
+    loader = getattr(browser_cookie3, browser_func_name, None)
     if loader is None:
-        logger.debug("rookiepy has no loader for %s", browser_func_name)
+        logger.debug("browser_cookie3 has no loader for %s", browser_func_name)
         return None
 
     try:
         return loader(domain_name=".aol.com")  # type: ignore[no-any-return]
     except Exception as exc:  # noqa: BLE001
-        logger.debug("Failed to load cookies via rookiepy.%s: %s", browser_func_name, exc)
+        logger.debug("Failed to load cookies via browser_cookie3.%s: %s", browser_func_name, exc)
         return None
 
 
 def _aol_cookies_from_jar(jar: CookieJar) -> dict[str, str]:
-    """Extract AOL-scoped cookies from a CookieJar."""
     result: dict[str, str] = {}
     for cookie in jar:
         domain = cookie.domain or ""
@@ -137,31 +115,25 @@ def _aol_cookies_from_jar(jar: CookieJar) -> dict[str, str]:
 
 
 def _has_session_indicators(cookies: dict[str, str], jar: CookieJar) -> bool:
-    """Return True if the cookies look like an active AOL session."""
-    # Any known session cookie name present?
     if _SESSION_COOKIE_NAMES & set(cookies.keys()):
         return True
-
-    # Any cookie from a login/mail subdomain?
     for cookie in jar:
         domain = (cookie.domain or "").lower()
         if domain in _LOGIN_DOMAINS:
             return True
-
     return False
 
 
 def detect_aol_session() -> AOLSession | None:
     """Probe installed browsers for an active AOL Mail session.
 
-    Returns the first successful ``AOLSession``, or ``None`` if no
-    browser has recognisable AOL session cookies.  This function never
-    raises; all errors are logged at DEBUG level.
+    Returns the first successful ``AOLSession``, or ``None``.
+    Never raises.
     """
     try:
-        import rookiepy  # type: ignore[import-untyped] # noqa: F401
+        import browser_cookie3  # type: ignore[import-untyped]  # noqa: F401
     except ImportError:
-        logger.debug("rookiepy is not installed — cookie detection unavailable")
+        logger.debug("browser_cookie3 is not installed — cookie detection unavailable")
         return None
 
     for display_name, func_name in _BROWSER_ORDER:
@@ -194,30 +166,21 @@ def detect_aol_session() -> AOLSession | None:
 
 
 def list_detected_browsers() -> list[str]:
-    """Return names of browsers where rookiepy can access cookies.
-
-    Useful for telling the user which browsers were checked.
-    Never raises; returns an empty list on failure.
-    """
+    """Return names of browsers where cookie access works. Never raises."""
     accessible: list[str] = []
-
     try:
-        import rookiepy  # type: ignore[import-untyped]
+        import browser_cookie3  # type: ignore[import-untyped]
     except ImportError:
-        logger.debug("rookiepy is not installed — cannot list browsers")
         return accessible
 
     for display_name, func_name in _BROWSER_ORDER:
-        loader = getattr(rookiepy, func_name, None)
+        loader = getattr(browser_cookie3, func_name, None)
         if loader is None:
             continue
         try:
-            # A lightweight probe — just ask for cookies from a dummy domain
-            # so we don't pull the entire jar.
             loader(domain_name=".example.invalid")
             accessible.append(display_name)
         except Exception:  # noqa: BLE001
-            # Browser not installed, locked profile, missing keychain, etc.
             logger.debug("%s: not accessible", display_name)
 
     return accessible

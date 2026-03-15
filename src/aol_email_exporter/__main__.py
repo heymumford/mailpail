@@ -58,7 +58,9 @@ def _build_parser() -> argparse.ArgumentParser:
     exp.add_argument("-o", "--output-dir", default="./export", help="Output directory (default: ./export)")
     exp.add_argument("--prefix", default="aol_export", help="Filename prefix (default: aol_export)")
     exp.add_argument(
-        "--group-by", choices=("folder", "sender", "date"), default="folder",
+        "--group-by",
+        choices=("folder", "sender", "date"),
+        default="folder",
         help="Grouping for excel-sheets format (default: folder)",
     )
 

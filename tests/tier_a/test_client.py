@@ -11,7 +11,6 @@ import pytest
 from aol_email_exporter.client import AOLClient
 from aol_email_exporter.models import FilterParams
 
-
 pytestmark = pytest.mark.tier_a
 
 

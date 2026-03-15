@@ -10,13 +10,6 @@ from typing import Any
 
 import customtkinter
 
-from aol_email_exporter.ui.theme import (
-    ACCEL_PREFIX,
-    COLORS,
-    FONTS,
-    ICONS,
-    WIZARD_STEPS,
-)
 from aol_email_exporter.ui.screens.complete import CompleteScreen
 from aol_email_exporter.ui.screens.filters import FilterScreen
 from aol_email_exporter.ui.screens.folders import FolderScreen
@@ -24,6 +17,13 @@ from aol_email_exporter.ui.screens.formats import FormatScreen
 from aol_email_exporter.ui.screens.login import LoginScreen
 from aol_email_exporter.ui.screens.progress import ProgressScreen
 from aol_email_exporter.ui.screens.welcome import WelcomeScreen
+from aol_email_exporter.ui.theme import (
+    ACCEL_PREFIX,
+    COLORS,
+    FONTS,
+    ICONS,
+    WIZARD_STEPS,
+)
 
 _SYSTEM = platform.system()
 _APP_NAME = "AOL Email Exporter"
@@ -157,9 +157,7 @@ class AOLExporterApp(customtkinter.CTk):
         about.transient(self)
         about.grab_set()
 
-        customtkinter.CTkLabel(
-            about, text=ICONS["welcome"], font=FONTS["icon"]
-        ).pack(pady=(20, 4))
+        customtkinter.CTkLabel(about, text=ICONS["welcome"], font=FONTS["icon"]).pack(pady=(20, 4))
         customtkinter.CTkLabel(
             about, text=_APP_NAME, font=(FONTS["subheader"][0], FONTS["subheader"][1], "bold")
         ).pack()
@@ -168,7 +166,7 @@ class AOLExporterApp(customtkinter.CTk):
         ).pack(pady=(2, 4))
         customtkinter.CTkLabel(
             about,
-            text="\u00A9 2026+ Eric C. Mumford",
+            text="\u00a9 2026+ Eric C. Mumford",
             font=FONTS["small"],
             text_color=COLORS["subtle"],
         ).pack()
@@ -300,7 +298,7 @@ class AOLExporterApp(customtkinter.CTk):
             dot_frame.pack(side="left", padx=4)
 
             dot = customtkinter.CTkLabel(
-                dot_frame, text="\u25CF", font=FONTS["dot"], text_color=COLORS["subtle"], width=20
+                dot_frame, text="\u25cf", font=FONTS["dot"], text_color=COLORS["subtle"], width=20
             )
             dot.pack()
             self._dot_labels.append(dot)

@@ -7,7 +7,6 @@ import os
 import platform
 import random
 import subprocess
-import sys
 from typing import TYPE_CHECKING
 
 import customtkinter

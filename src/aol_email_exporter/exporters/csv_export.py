@@ -40,17 +40,19 @@ class CsvExporter:
                 writer.writerow(_COLUMNS)
 
                 for rec in records:
-                    writer.writerow([
-                        rec.date.isoformat() if rec.date else "",
-                        rec.sender,
-                        rec.to,
-                        rec.cc,
-                        rec.subject,
-                        rec.body_text,
-                        rec.folder,
-                        rec.has_attachments,
-                        rec.message_id,
-                    ])
+                    writer.writerow(
+                        [
+                            rec.date.isoformat() if rec.date else "",
+                            rec.sender,
+                            rec.to,
+                            rec.cc,
+                            rec.subject,
+                            rec.body_text,
+                            rec.folder,
+                            rec.has_attachments,
+                            rec.message_id,
+                        ]
+                    )
 
             file_size = out_path.stat().st_size
             logger.info("CSV export complete: %d records, %s (%d bytes)", len(records), out_path, file_size)

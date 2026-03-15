@@ -15,18 +15,15 @@ openpyxl = pytest.importorskip("openpyxl")
 pytestmark = pytest.mark.tier_a
 
 EXPECTED_HEADERS = [
-    "uid",
-    "date",
-    "sender",
-    "to",
-    "cc",
-    "subject",
-    "body_text",
-    "body_html",
-    "folder",
-    "has_attachments",
-    "message_id",
-    "size_bytes",
+    "Date",
+    "From",
+    "To",
+    "CC",
+    "Subject",
+    "Body",
+    "Folder",
+    "Attachments",
+    "Message-ID",
 ]
 
 

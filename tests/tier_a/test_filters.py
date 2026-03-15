@@ -3,13 +3,10 @@
 
 from __future__ import annotations
 
-import datetime
-
 import pytest
 
 from aol_email_exporter.filters import apply_filters, sort_records
 from aol_email_exporter.models import FilterParams
-
 
 pytestmark = pytest.mark.tier_a
 
