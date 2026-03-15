@@ -38,8 +38,14 @@ def _build_parser() -> argparse.ArgumentParser:
         default="MAILPAIL_APP_PASSWORD",
         help="Environment variable containing the app password (default: MAILPAIL_APP_PASSWORD)",
     )
-    conn.add_argument("--server", default="export.imap.aol.com", help="IMAP server (default: export.imap.aol.com)")
-    conn.add_argument("--port", type=int, default=993, help="IMAP port (default: 993)")
+    conn.add_argument(
+        "--provider",
+        choices=("aol", "gmail", "outlook", "yahoo", "imap"),
+        default="aol",
+        help="Email provider (default: aol). Sets server/port automatically unless overridden.",
+    )
+    conn.add_argument("--server", default=None, help="IMAP server (overrides provider default)")
+    conn.add_argument("--port", type=int, default=None, help="IMAP port (overrides provider default)")
 
     # Filters
     filt = p.add_argument_group("filters")
@@ -115,6 +121,7 @@ def _run_cli(args: argparse.Namespace) -> None:
     from mailpail.filters import apply_filters
     from mailpail.logging_config import setup_logging
     from mailpail.models import ExportConfig, FilterParams
+    from mailpail.providers import get_provider_info
 
     setup_logging(level=args.log_level, log_file=args.log_file, syslog=args.syslog)
     logger.debug("mailpail %s starting (CLI mode)", __version__)
@@ -123,10 +130,19 @@ def _run_cli(args: argparse.Namespace) -> None:
         print("Error: --username is required in CLI mode.", file=sys.stderr)
         sys.exit(1)
 
+    # Resolve server/port from provider unless explicitly overridden.
+    provider = get_provider_info(args.provider)
+    server = args.server if args.server else provider.server
+    port = args.port if args.port else provider.port
+
+    if not server:
+        print("Error: --server is required for custom IMAP provider.", file=sys.stderr)
+        sys.exit(1)
+
     try:
         password = _resolve_password(args)
 
-        with IMAPClient(username=args.username, password=password, server=args.server, port=args.port) as client:
+        with IMAPClient(username=args.username, password=password, server=server, port=port) as client:
             if args.list_folders:
                 folders = client.list_folders()
                 print("Available folders:")

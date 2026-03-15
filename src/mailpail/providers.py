@@ -63,6 +63,34 @@ PROVIDERS: dict[str, ProviderInfo] = {
         port=993,
         help_url="https://login.aol.com/account/security/app-passwords",
     ),
+    "gmail": ProviderInfo(
+        key="gmail",
+        name="Gmail",
+        server="imap.gmail.com",
+        port=993,
+        help_url="https://myaccount.google.com/apppasswords",
+    ),
+    "outlook": ProviderInfo(
+        key="outlook",
+        name="Outlook / Hotmail",
+        server="outlook.office365.com",
+        port=993,
+        help_url="https://support.microsoft.com/en-us/account-billing/manage-app-passwords-for-two-step-verification",
+    ),
+    "yahoo": ProviderInfo(
+        key="yahoo",
+        name="Yahoo Mail",
+        server="imap.mail.yahoo.com",
+        port=993,
+        help_url="https://help.yahoo.com/kb/generate-manage-third-party-passwords-sln15241.html",
+    ),
+    "imap": ProviderInfo(
+        key="imap",
+        name="Other IMAP Server",
+        server="",
+        port=993,
+        help_url="",
+    ),
 }
 
 DEFAULT_PROVIDER = "aol"

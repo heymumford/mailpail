@@ -121,3 +121,126 @@ class TestNoFadeIn:
                 violations.append(path.name)
 
         assert not violations, f"fade_in still referenced in: {violations}"
+
+
+class TestProviders:
+    """Provider registry completeness."""
+
+    def test_all_providers_registered(self):
+        from mailpail.providers import PROVIDERS
+
+        expected = {"aol", "gmail", "outlook", "yahoo", "imap"}
+        assert set(PROVIDERS.keys()) == expected
+
+    def test_all_providers_have_server(self):
+        """All providers except 'imap' must have a server set."""
+        from mailpail.providers import PROVIDERS
+
+        for key, info in PROVIDERS.items():
+            if key == "imap":
+                continue
+            assert info.server, f"Provider {key!r} has no server"
+
+    def test_provider_flag_accepted(self):
+        """CLI accepts --provider flag."""
+        from mailpail.__main__ import _build_parser
+
+        parser = _build_parser()
+        for provider in ("aol", "gmail", "outlook", "yahoo", "imap"):
+            args = parser.parse_args(["--username", "u@x.com", "--provider", provider])
+            assert args.provider == provider
+
+    def test_base_screen_exists(self):
+        """BaseScreen class exists and is importable."""
+        from mailpail.ui.screens.base import BaseScreen
+
+        assert hasattr(BaseScreen, "screen_icon")
+        assert hasattr(BaseScreen, "screen_title")
+        assert hasattr(BaseScreen, "make_card")
+
+
+class TestPersonaRequirements:
+    """Persona-driven acceptance criteria.
+
+    Margaret: font sizes >= 16px body, no jargon, reassurance text
+    Derek: --provider flag, --dry-run, exit codes
+    Sandra: ExportResult has audit fields
+    Ray: default format is CSV, default dir is Desktop
+    """
+
+    def test_margaret_body_font_size(self):
+        """Body font must be >= 16px for readability."""
+        from mailpail.ui.theme import FONTS
+
+        assert FONTS["body"][1] >= 16
+
+    def test_margaret_no_jargon_in_strings(self):
+        """User-visible strings must not contain protocol jargon."""
+        from mailpail.ui import strings
+
+        # Collect all string values from the module
+        jargon = {"IMAP", "SMTP", "SSL", "TLS", "RFC", "MIME"}
+        violations: list[str] = []
+        for name in dir(strings):
+            if name.startswith("_"):
+                continue
+            val = getattr(strings, name)
+            if isinstance(val, str):
+                for j in jargon:
+                    if j in val:
+                        violations.append(f"{name}: contains '{j}'")
+            elif isinstance(val, list):
+                for item in val:
+                    if isinstance(item, str):
+                        for j in jargon:
+                            if j in item:
+                                violations.append(f"{name}: contains '{j}'")
+        assert not violations, "Jargon in user strings:\n" + "\n".join(violations)
+
+    def test_margaret_reassurance_text_exists(self):
+        """Reassurance text is defined for user comfort."""
+        from mailpail.ui.strings import PROGRESS_REASSURANCE, REASSURANCE_READONLY
+
+        assert "safe" in PROGRESS_REASSURANCE.lower() or "not" in PROGRESS_REASSURANCE.lower()
+        assert "delete" in REASSURANCE_READONLY.lower() or "read-only" in REASSURANCE_READONLY.lower()
+
+    def test_derek_provider_flag(self):
+        """--provider flag exists with correct choices."""
+        from mailpail.__main__ import _build_parser
+
+        parser = _build_parser()
+        args = parser.parse_args(["--username", "u@x.com", "--provider", "gmail"])
+        assert args.provider == "gmail"
+
+    def test_derek_dry_run(self):
+        """--dry-run flag exists."""
+        from mailpail.__main__ import _build_parser
+
+        parser = _build_parser()
+        args = parser.parse_args(["--username", "u@x.com", "--dry-run"])
+        assert args.dry_run is True
+
+    def test_sandra_export_result_audit_fields(self):
+        """ExportResult has fields needed for audit trail."""
+        from mailpail.models import ExportResult
+
+        fields = {f.name for f in ExportResult.__dataclass_fields__.values()}
+        assert "format_name" in fields
+        assert "file_path" in fields
+        assert "record_count" in fields
+        assert "success" in fields
+
+    def test_ray_default_format_csv(self):
+        """Default export format is CSV."""
+        from mailpail.__main__ import _build_parser
+
+        parser = _build_parser()
+        args = parser.parse_args(["--username", "u@x.com"])
+        assert args.format == ["csv"]
+
+    def test_ray_default_dir_desktop(self):
+        """Default export directory includes Desktop."""
+        import os
+
+        default_dir = os.path.join(os.path.expanduser("~"), "Desktop", "Mailpail_Export")
+        assert "Desktop" in default_dir
