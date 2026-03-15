@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-extras
+      - run: uv run pyinstaller --onefile --name aol-email-exporter --windowed src/aol_email_exporter/__main__.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: dist/aol-email-exporter.exe
+
+  build-macos-app:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-extras
+      - run: uv run pyinstaller --onefile --name aol-email-exporter --windowed src/aol_email_exporter/__main__.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: dist/aol-email-exporter
+
+  release:
+    needs: [build-windows-exe, build-macos-app]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-exe
+          path: artifacts/windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos-app
+          path: artifacts/macos
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/windows/aol-email-exporter.exe
+            artifacts/macos/aol-email-exporter

@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aol-email-exporter"
+version = "0.1.0"
+description = "Download and export AOL email to PDF, Excel, and compressed CSV"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.12"
+authors = [
+    {name = "Eric C. Mumford", email = "eric@mumfordengineering.com"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "imap-tools>=1.7.0",
+    "openpyxl>=3.1.0",
+    "fpdf2>=2.8.0",
+    "customtkinter>=5.2.0",
+    "Pillow>=10.0.0",
+    "rookiepy>=0.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-xdist>=3.5",
+    "pytest-cov>=5.0",
+    "ruff>=0.8.0",
+    "pyinstaller>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/heymumford/aol-email-exporter"
+Repository = "https://github.com/heymumford/aol-email-exporter"
+
+[project.scripts]
+aol-email-exporter = "aol_email_exporter.__main__:main"
+
+[project.gui-scripts]
+aol-email-exporter-gui = "aol_email_exporter.__main__:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "tier_a: Must-pass product feature scenarios",
+    "tier_b: Regression and edge case tests",
+]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["aol_email_exporter"]
