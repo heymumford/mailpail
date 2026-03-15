@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from aol_email_exporter.exporters.pdf_export import PdfExporter
-from aol_email_exporter.models import ExportConfig
+from mailpail.exporters.pdf_export import PdfExporter
+from mailpail.models import ExportConfig
 
 pytestmark = pytest.mark.tier_a
 

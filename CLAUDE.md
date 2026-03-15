@@ -1,4 +1,4 @@
-# AOL Email Exporter
+# Mailpail
 
 ## Build
 - `just install` -- set up environment
@@ -10,7 +10,7 @@
 - `just build-exe` -- build Windows executable
 
 ## Architecture
-- `src/aol_email_exporter/` -- application code
+- `src/mailpail/` -- application code
   - `ui/` -- customtkinter wizard interface
   - `exporters/` -- CSV, Excel, PDF exporters
   - `client.py` -- IMAP client

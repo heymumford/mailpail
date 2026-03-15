@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from aol_email_exporter.client import AOLClient
-from aol_email_exporter.models import FilterParams
+from mailpail.client import IMAPClient
+from mailpail.models import FilterParams
 
 pytestmark = pytest.mark.tier_a
 
@@ -54,41 +54,41 @@ def _mock_message(
     return msg
 
 
-class TestAOLClient:
+class TestIMAPClient:
     """IMAP client wrapper tests using mocked MailBox."""
 
-    @patch("aol_email_exporter.client.MailBox")
+    @patch("mailpail.client.MailBox")
     def test_connect_success(self, mock_mailbox_cls):
         mb = _mock_mailbox()
         mock_mailbox_cls.return_value = mb
 
-        client = AOLClient("user@aol.com", "apppassword123")
+        client = IMAPClient("user@aol.com", "apppassword123")
         client.connect()
 
         mock_mailbox_cls.assert_called_once_with("export.imap.aol.com", 993)
         mb.login.assert_called_once_with("user@aol.com", "apppassword123")
 
-    @patch("aol_email_exporter.client.MailBox")
+    @patch("mailpail.client.MailBox")
     def test_connect_failure(self, mock_mailbox_cls):
         mb = _mock_mailbox()
         mb.login.side_effect = Exception("Auth failed")
         mock_mailbox_cls.return_value = mb
 
-        client = AOLClient("user@aol.com", "badpass")
+        client = IMAPClient("user@aol.com", "badpass")
         with pytest.raises(ConnectionError, match="Failed to connect"):
             client.connect()
 
-    @patch("aol_email_exporter.client.MailBox")
+    @patch("mailpail.client.MailBox")
     def test_context_manager(self, mock_mailbox_cls):
         mb = _mock_mailbox()
         mock_mailbox_cls.return_value = mb
 
-        with AOLClient("user@aol.com", "pass") as client:
+        with IMAPClient("user@aol.com", "pass") as client:
             mb.login.assert_called_once()
             assert client is not None
         mb.logout.assert_called_once()
 
-    @patch("aol_email_exporter.client.MailBox")
+    @patch("mailpail.client.MailBox")
     def test_list_folders(self, mock_mailbox_cls):
         mb = _mock_mailbox()
         folder1 = MagicMock()
@@ -100,20 +100,20 @@ class TestAOLClient:
         mb.folder.list.return_value = [folder1, folder2, folder3]
         mock_mailbox_cls.return_value = mb
 
-        client = AOLClient("user@aol.com", "pass")
+        client = IMAPClient("user@aol.com", "pass")
         client.connect()
         folders = client.list_folders()
 
         assert folders == ["INBOX", "Sent", "Trash"]
 
-    @patch("aol_email_exporter.client.MailBox")
+    @patch("mailpail.client.MailBox")
     def test_fetch_emails_basic(self, mock_mailbox_cls):
         mb = _mock_mailbox()
         msg = _mock_message(uid="42", subject="Hello world", from_="alice@aol.com")
         mb.fetch.return_value = iter([msg])
         mock_mailbox_cls.return_value = mb
 
-        client = AOLClient("user@aol.com", "pass")
+        client = IMAPClient("user@aol.com", "pass")
         client.connect()
         records = client.fetch_emails(FilterParams())
 
@@ -123,14 +123,14 @@ class TestAOLClient:
         assert records[0].sender == "alice@aol.com"
         assert records[0].folder == "INBOX"
 
-    @patch("aol_email_exporter.client.AND")
-    @patch("aol_email_exporter.client.MailBox")
+    @patch("mailpail.client.AND")
+    @patch("mailpail.client.MailBox")
     def test_fetch_with_date_filter(self, mock_mailbox_cls, mock_and):
         mb = _mock_mailbox()
         mock_mailbox_cls.return_value = mb
         mock_and.return_value = MagicMock()
 
-        client = AOLClient("user@aol.com", "pass")
+        client = IMAPClient("user@aol.com", "pass")
         client.connect()
 
         filters = FilterParams(
@@ -145,14 +145,14 @@ class TestAOLClient:
         assert call_kwargs["date_gte"] == datetime.date(2024, 1, 1)
         assert call_kwargs["date_lt"] == datetime.date(2024, 6, 1)
 
-    @patch("aol_email_exporter.client.AND")
-    @patch("aol_email_exporter.client.MailBox")
+    @patch("mailpail.client.AND")
+    @patch("mailpail.client.MailBox")
     def test_fetch_with_sender_filter(self, mock_mailbox_cls, mock_and):
         mb = _mock_mailbox()
         mock_mailbox_cls.return_value = mb
         mock_and.return_value = MagicMock()
 
-        client = AOLClient("user@aol.com", "pass")
+        client = IMAPClient("user@aol.com", "pass")
         client.connect()
 
         filters = FilterParams(sender="alice@aol.com")

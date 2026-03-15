@@ -12,44 +12,6 @@ wheels = [
 ]
 
 [[package]]
-name = "aol-email-exporter"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "browser-cookie3" },
-    { name = "customtkinter" },
-    { name = "fpdf2" },
-    { name = "imap-tools" },
-    { name = "openpyxl" },
-    { name = "pillow" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pyinstaller" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-xdist" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "browser-cookie3", specifier = ">=0.20.0" },
-    { name = "customtkinter", specifier = ">=5.2.0" },
-    { name = "fpdf2", specifier = ">=2.8.0" },
-    { name = "imap-tools", specifier = ">=1.7.0" },
-    { name = "openpyxl", specifier = ">=3.1.0" },
-    { name = "pillow", specifier = ">=10.0.0" },
-    { name = "pyinstaller", marker = "extra == 'dev'", specifier = ">=6.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
-    { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.5" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0" },
-]
-provides-extras = ["dev"]
-
-[[package]]
 name = "browser-cookie3"
 version = "0.20.1"
 source = { registry = "https://pypi.org/simple" }
@@ -339,6 +301,44 @@ sdist = { url = "https://files.pythonhosted.org/packages/10/2f/97589876ea9674879
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/d1/a9f36f8ecdf0fb7c9b1e78c8d7af12b8c8754e74851ac7b94a8305540fc7/macholib-1.16.4-py2.py3-none-any.whl", hash = "sha256:da1a3fa8266e30f0ce7e97c6a54eefaae8edd1e5f86f3eb8b95457cae90265ea", size = 38117, upload-time = "2025-11-22T08:28:36.939Z" },
 ]
+
+[[package]]
+name = "mailpail"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "browser-cookie3" },
+    { name = "customtkinter" },
+    { name = "fpdf2" },
+    { name = "imap-tools" },
+    { name = "openpyxl" },
+    { name = "pillow" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pyinstaller" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-xdist" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "browser-cookie3", specifier = ">=0.20.0" },
+    { name = "customtkinter", specifier = ">=5.2.0" },
+    { name = "fpdf2", specifier = ">=2.8.0" },
+    { name = "imap-tools", specifier = ">=1.7.0" },
+    { name = "openpyxl", specifier = ">=3.1.0" },
+    { name = "pillow", specifier = ">=10.0.0" },
+    { name = "pyinstaller", marker = "extra == 'dev'", specifier = ">=6.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.5" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "openpyxl"

@@ -1,7 +1,7 @@
 # Copyright (C) 2026+ Eric C. Mumford <eric@mumfordengineering.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Email provider abstraction — AOL is the first adapter.
+"""Email provider abstraction.
 
 To add a new provider (Gmail, Outlook, etc.):
 1. Create a class satisfying the ``EmailProvider`` Protocol.
@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from types import TracebackType
 from typing import Protocol, runtime_checkable
 
-from aol_email_exporter.models import EmailRecord, FilterParams
+from mailpail.models import EmailRecord, FilterParams
 
 
 @runtime_checkable
@@ -62,6 +62,34 @@ PROVIDERS: dict[str, ProviderInfo] = {
         server="export.imap.aol.com",
         port=993,
         help_url="https://login.aol.com/account/security/app-passwords",
+    ),
+    "gmail": ProviderInfo(
+        key="gmail",
+        name="Gmail",
+        server="imap.gmail.com",
+        port=993,
+        help_url="https://myaccount.google.com/apppasswords",
+    ),
+    "outlook": ProviderInfo(
+        key="outlook",
+        name="Outlook / Hotmail",
+        server="outlook.office365.com",
+        port=993,
+        help_url="https://support.microsoft.com/en-us/account-billing/manage-app-passwords-for-two-step-verification",
+    ),
+    "yahoo": ProviderInfo(
+        key="yahoo",
+        name="Yahoo Mail",
+        server="imap.mail.yahoo.com",
+        port=993,
+        help_url="https://help.yahoo.com/kb/generate-manage-third-party-passwords-sln15241.html",
+    ),
+    "imap": ProviderInfo(
+        key="imap",
+        name="Other IMAP Server",
+        server="",
+        port=993,
+        help_url="",
     ),
 }
 

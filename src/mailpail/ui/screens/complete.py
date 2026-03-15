@@ -10,11 +10,11 @@ from typing import TYPE_CHECKING
 
 import customtkinter
 
-from aol_email_exporter.ui.theme import COLORS, FONTS, ICONS, fade_in
+from mailpail.ui.theme import COLORS, FONTS, ICONS
 
 if TYPE_CHECKING:
-    from aol_email_exporter.models import ExportResult
-    from aol_email_exporter.ui.app import AOLExporterApp
+    from mailpail.models import ExportResult
+    from mailpail.ui.app import MailpailApp
 
 _CELEBRATION_COLORS = ["#007AFF", "#34C759", "#FF9500", "#FF3B30", "#AF52DE", "#5AC8FA"]
 
@@ -22,7 +22,7 @@ _CELEBRATION_COLORS = ["#007AFF", "#34C759", "#FF9500", "#FF3B30", "#AF52DE", "#
 class CompleteScreen(customtkinter.CTkFrame):
     """Wizard step 7 — export summary, file locations, and celebratory finish."""
 
-    def __init__(self, parent: customtkinter.CTkFrame, app: AOLExporterApp) -> None:
+    def __init__(self, parent: customtkinter.CTkFrame, app: MailpailApp) -> None:
         super().__init__(parent, fg_color=COLORS["bg"])
         self._app = app
         self._build()
@@ -82,7 +82,7 @@ class CompleteScreen(customtkinter.CTkFrame):
             font=FONTS["body"],
             fg_color=COLORS["accent"],
             hover_color=COLORS["accent_hover"],
-            text_color="#FFFFFF",
+            text_color=COLORS["button_text"],
             corner_radius=12,
             height=48,
             width=240,
@@ -127,7 +127,6 @@ class CompleteScreen(customtkinter.CTkFrame):
     def on_show(self) -> None:
         """Called when this screen becomes visible."""
         self._populate_summary()
-        fade_in(self, steps=10, delay_ms=30)
         self.after(300, lambda: self._celebrate(0))
 
     def _populate_summary(self) -> None:

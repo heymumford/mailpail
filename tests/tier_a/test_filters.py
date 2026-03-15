@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import pytest
 
-from aol_email_exporter.filters import apply_filters, sort_records
-from aol_email_exporter.models import FilterParams
+from mailpail.filters import apply_filters, sort_records
+from mailpail.models import FilterParams
 
 pytestmark = pytest.mark.tier_a
 

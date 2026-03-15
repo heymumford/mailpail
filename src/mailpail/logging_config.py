@@ -10,7 +10,7 @@ import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-logger = logging.getLogger("aol_email_exporter")
+logger = logging.getLogger("mailpail")
 
 LOG_FORMAT = "%(asctime)s %(levelname)-8s %(name)s %(funcName)s:%(lineno)d %(message)s"
 
@@ -22,8 +22,8 @@ def _default_log_path() -> Path:
     """Return the platform-appropriate default log file path."""
     if platform.system() == "Windows":
         base = os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))
-        return Path(base) / "aol-email-exporter" / "logs" / "exporter.log"
-    return Path.home() / ".local" / "log" / "aol-email-exporter" / "exporter.log"
+        return Path(base) / "mailpail" / "logs" / "exporter.log"
+    return Path.home() / ".local" / "log" / "mailpail" / "exporter.log"
 
 
 def _add_file_handler(log_file: str | None) -> None:
@@ -45,7 +45,7 @@ def _add_syslog_handler() -> None:
         try:
             from logging.handlers import NTEventLogHandler  # type: ignore[attr-defined]
 
-            handler = NTEventLogHandler("AOLEmailExporter")
+            handler = NTEventLogHandler("Mailpail")
             handler.setFormatter(logging.Formatter(LOG_FORMAT))
             logger.addHandler(handler)
             logger.debug("Windows Event Log handler enabled")

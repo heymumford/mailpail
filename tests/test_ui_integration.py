@@ -15,7 +15,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 # Screenshot output directory
-SCREENSHOT_DIR = Path("/tmp/aol_ui_test")
+SCREENSHOT_DIR = Path("/tmp/mailpail_ui_test")
 SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
 _step = 0
@@ -114,7 +114,7 @@ def test_welcome_screen(app):
     label_texts = [lbl.cget("text") for lbl in labels if lbl.cget("text")]
     print(f"  Labels: {label_texts[:5]}...")
 
-    assert any("AOL Email Exporter" in t for t in label_texts), "Missing title label"
+    assert any("Mailpail" in t for t in label_texts), "Missing title label"
     print("  [OK] Title label found")
 
     assert any("Get Started" in (btn.cget("text") or "") for btn in buttons), "Missing Get Started button"
@@ -390,7 +390,7 @@ def test_complete_screen(app):
     print("\n=== TEST: Complete Screen ===")
 
     # Set up mock results for the complete screen
-    from aol_email_exporter.models import ExportResult
+    from mailpail.models import ExportResult
 
     app.wizard_state["total_emails"] = 1234
     app.wizard_state["results"] = [
@@ -526,21 +526,21 @@ def test_navigation(app):
 def run_all():
     """Run all UI integration tests."""
     print(f"\n{'=' * 60}")
-    print("AOL Email Exporter — Headful UI Integration Tests")
+    print("Mailpail — Headful UI Integration Tests")
     print(f"Screenshots: {SCREENSHOT_DIR}")
     print(f"{'=' * 60}")
 
-    from aol_email_exporter.logging_config import setup_logging
+    from mailpail.logging_config import setup_logging
 
     setup_logging(level="DEBUG")
 
     import customtkinter
 
-    from aol_email_exporter.ui.app import AOLExporterApp
+    from mailpail.ui.app import MailpailApp
 
     customtkinter.set_appearance_mode("light")
 
-    app = AOLExporterApp()
+    app = MailpailApp()
     _pump(app, 1000)
 
     results = {}

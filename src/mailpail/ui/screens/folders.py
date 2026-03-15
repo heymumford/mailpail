@@ -8,16 +8,16 @@ from typing import TYPE_CHECKING
 
 import customtkinter
 
-from aol_email_exporter.ui.theme import COLORS, FONTS, ICONS, fade_in
+from mailpail.ui.theme import COLORS, FONTS, ICONS
 
 if TYPE_CHECKING:
-    from aol_email_exporter.ui.app import AOLExporterApp
+    from mailpail.ui.app import MailpailApp
 
 
 class FolderScreen(customtkinter.CTkFrame):
     """Wizard step 3 — select which IMAP folders to export."""
 
-    def __init__(self, parent: customtkinter.CTkFrame, app: AOLExporterApp) -> None:
+    def __init__(self, parent: customtkinter.CTkFrame, app: MailpailApp) -> None:
         super().__init__(parent, fg_color=COLORS["bg"])
         self._app = app
         self._checkboxes: list[tuple[customtkinter.CTkCheckBox, customtkinter.StringVar]] = []
@@ -64,7 +64,7 @@ class FolderScreen(customtkinter.CTkFrame):
             font=FONTS["label"],
             fg_color=COLORS["accent"],
             hover_color=COLORS["accent_hover"],
-            text_color="#FFFFFF",
+            text_color=COLORS["button_text"],
             corner_radius=8,
             height=32,
             width=120,
@@ -76,8 +76,8 @@ class FolderScreen(customtkinter.CTkFrame):
             text="Deselect All",
             font=FONTS["label"],
             fg_color=COLORS["subtle"],
-            hover_color="#6B7585",
-            text_color="#FFFFFF",
+            hover_color=COLORS["subtle_hover"],
+            text_color=COLORS["button_text"],
             corner_radius=8,
             height=32,
             width=120,
@@ -107,11 +107,10 @@ class FolderScreen(customtkinter.CTkFrame):
 
     def on_show(self) -> None:
         """Called when this screen becomes visible. Load folders from server."""
-        fade_in(self, steps=10, delay_ms=30)
         self._load_folders()
 
     def _load_folders(self) -> None:
-        """Fetch folder list from the AOL client in a background thread."""
+        """Fetch folder list from the IMAP client in a background thread."""
         client = self._app.wizard_state.get("client")
         if client is None:
             self._loading_label.configure(

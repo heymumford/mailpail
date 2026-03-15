@@ -10,10 +10,10 @@ from pathlib import Path
 
 import pytest
 
-from aol_email_exporter.exporters.csv_export import CsvExporter
-from aol_email_exporter.exporters.excel_export import ExcelExporter, ExcelSheetsExporter
-from aol_email_exporter.exporters.pdf_export import PdfExporter
-from aol_email_exporter.models import EmailRecord, ExportConfig
+from mailpail.exporters.csv_export import CsvExporter
+from mailpail.exporters.excel_export import ExcelExporter, ExcelSheetsExporter
+from mailpail.exporters.pdf_export import PdfExporter
+from mailpail.models import EmailRecord, ExportConfig
 
 openpyxl = pytest.importorskip("openpyxl")
 

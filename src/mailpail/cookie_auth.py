@@ -1,9 +1,9 @@
 # Copyright (C) 2026+ Eric C. Mumford <eric@mumfordengineering.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Browser cookie extraction for AOL session detection.
+"""Browser cookie extraction for email session detection.
 
-Uses ``browser_cookie3`` to probe installed browsers for AOL Mail
+Uses ``browser_cookie3`` to probe installed browsers for email
 session cookies.  This is best-effort — all errors are swallowed
 and logged at DEBUG level so the app never crashes from cookie issues.
 """
@@ -36,8 +36,8 @@ _LOGIN_DOMAINS: set[str] = {".login.aol.com", "login.aol.com", "mail.aol.com"}
 
 
 @dataclass(frozen=True)
-class AOLSession:
-    """Detected AOL browser session."""
+class BrowserSession:
+    """Detected browser session."""
 
     username: str
     browser: str
@@ -124,10 +124,10 @@ def _has_session_indicators(cookies: dict[str, str], jar: CookieJar) -> bool:
     return False
 
 
-def detect_aol_session() -> AOLSession | None:
-    """Probe installed browsers for an active AOL Mail session.
+def detect_browser_session() -> BrowserSession | None:
+    """Probe installed browsers for an active email session.
 
-    Returns the first successful ``AOLSession``, or ``None``.
+    Returns the first successful ``BrowserSession``, or ``None``.
     Never raises.
     """
     try:
@@ -137,31 +137,31 @@ def detect_aol_session() -> AOLSession | None:
         return None
 
     for display_name, func_name in _BROWSER_ORDER:
-        logger.debug("Checking %s for AOL session cookies", display_name)
+        logger.debug("Checking %s for session cookies", display_name)
         jar = _get_cookiejar(func_name)
         if jar is None:
             continue
 
         cookies = _aol_cookies_from_jar(jar)
         if not cookies:
-            logger.debug("%s: no AOL cookies found", display_name)
+            logger.debug("%s: no cookies found", display_name)
             continue
 
         if not _has_session_indicators(cookies, jar):
-            logger.debug("%s: AOL cookies present but no session indicators", display_name)
+            logger.debug("%s: cookies present but no session indicators", display_name)
             continue
 
         username = _extract_username(cookies)
-        session = AOLSession(
+        session = BrowserSession(
             username=username,
             browser=display_name,
             cookies=cookies,
             detected_at=datetime.datetime.now(datetime.UTC),
         )
-        logger.debug("Detected AOL session in %s for %s", display_name, username)
+        logger.debug("Detected session in %s for %s", display_name, username)
         return session
 
-    logger.debug("No AOL session detected in any browser")
+    logger.debug("No session detected in any browser")
     return None
 
 

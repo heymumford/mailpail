@@ -9,11 +9,11 @@ import gzip
 
 import pytest
 
-from aol_email_exporter.exporters.csv_export import CsvExporter
-from aol_email_exporter.exporters.excel_export import ExcelExporter
-from aol_email_exporter.exporters.pdf_export import PdfExporter
-from aol_email_exporter.filters import apply_filters
-from aol_email_exporter.models import EmailRecord, ExportConfig, FilterParams
+from mailpail.exporters.csv_export import CsvExporter
+from mailpail.exporters.excel_export import ExcelExporter
+from mailpail.exporters.pdf_export import PdfExporter
+from mailpail.filters import apply_filters
+from mailpail.models import EmailRecord, ExportConfig, FilterParams
 
 openpyxl = pytest.importorskip("openpyxl")
 

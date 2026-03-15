@@ -9,7 +9,7 @@ from pathlib import Path
 
 from fpdf import FPDF
 
-from aol_email_exporter.models import EmailRecord, ExportConfig, ExportResult
+from mailpail.models import EmailRecord, ExportConfig, ExportResult
 
 logger = logging.getLogger(__name__)
 

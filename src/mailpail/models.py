@@ -1,7 +1,7 @@
 # Copyright (C) 2026+ Eric C. Mumford <eric@mumfordengineering.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Data models for AOL Email Exporter."""
+"""Data models for Mailpail."""
 
 from __future__ import annotations
 
@@ -46,8 +46,8 @@ class ExportConfig:
     output_dir: str = "./export"
     formats: tuple[str, ...] = ("csv",)
     excel_group_by: str = "folder"
-    pdf_title: str = "AOL Email Export"
-    filename_prefix: str = "aol_export"
+    pdf_title: str = "Email Export"
+    filename_prefix: str = "mail_export"
 
 
 @dataclass

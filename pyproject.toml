@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "aol-email-exporter"
+name = "mailpail"
 version = "0.1.0"
-description = "Download and export AOL email to PDF, Excel, and compressed CSV"
+description = "Download and export your email to PDF, Excel, and compressed CSV"
 license = "GPL-3.0-or-later"
 requires-python = ">=3.12"
 authors = [
@@ -36,14 +36,14 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/heymumford/aol-email-exporter"
-Repository = "https://github.com/heymumford/aol-email-exporter"
+Homepage = "https://github.com/heymumford/mailpail"
+Repository = "https://github.com/heymumford/mailpail"
 
 [project.scripts]
-aol-email-exporter = "aol_email_exporter.__main__:main"
+mailpail = "mailpail.__main__:main"
 
 [project.gui-scripts]
-aol-email-exporter-gui = "aol_email_exporter.__main__:main"
+mailpail-gui = "mailpail.__main__:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -61,4 +61,4 @@ target-version = "py312"
 select = ["E", "F", "W", "I"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["aol_email_exporter"]
+known-first-party = ["mailpail"]

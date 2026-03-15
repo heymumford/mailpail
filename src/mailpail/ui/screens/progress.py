@@ -10,14 +10,14 @@ from typing import TYPE_CHECKING, Any
 
 import customtkinter
 
-from aol_email_exporter.exporters import get_exporter
-from aol_email_exporter.filters import apply_filters
-from aol_email_exporter.models import ExportConfig, ExportResult, FilterParams
-from aol_email_exporter.ui.theme import COLORS, FONTS, ICONS, fade_in
+from mailpail.exporters import get_exporter
+from mailpail.filters import apply_filters
+from mailpail.models import ExportConfig, ExportResult, FilterParams
+from mailpail.ui.theme import COLORS, FONTS, ICONS
 
 if TYPE_CHECKING:
-    from aol_email_exporter.client import AOLClient
-    from aol_email_exporter.ui.app import AOLExporterApp
+    from mailpail.client import IMAPClient
+    from mailpail.ui.app import MailpailApp
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class _UILogHandler(logging.Handler):
 class ProgressScreen(customtkinter.CTkFrame):
     """Wizard step 6 — download and export progress with live feedback."""
 
-    def __init__(self, parent: customtkinter.CTkFrame, app: AOLExporterApp) -> None:
+    def __init__(self, parent: customtkinter.CTkFrame, app: MailpailApp) -> None:
         super().__init__(parent, fg_color=COLORS["bg"])
         self._app = app
         self._cancel_event = threading.Event()
@@ -121,8 +121,8 @@ class ProgressScreen(customtkinter.CTkFrame):
             text="Cancel",
             font=FONTS["label"],
             fg_color=COLORS["error"],
-            hover_color="#C0392B",
-            text_color="#FFFFFF",
+            hover_color=COLORS["error_hover"],
+            text_color=COLORS["button_text"],
             corner_radius=8,
             height=40,
             width=140,
@@ -132,7 +132,6 @@ class ProgressScreen(customtkinter.CTkFrame):
 
     def on_show(self) -> None:
         """Called when this screen becomes visible. Start the download."""
-        fade_in(self, steps=10, delay_ms=30)
         self._cancel_event.clear()
         self._start_download()
 
@@ -156,7 +155,7 @@ class ProgressScreen(customtkinter.CTkFrame):
         # Install log handler
         self._log_handler = _UILogHandler(self._append_log)
         self._log_handler.setFormatter(logging.Formatter("%(message)s"))
-        logging.getLogger("aol_email_exporter").addHandler(self._log_handler)
+        logging.getLogger("mailpail").addHandler(self._log_handler)
 
         self._worker_thread = threading.Thread(target=self._worker, daemon=True)
         self._worker_thread.start()
@@ -168,11 +167,11 @@ class ProgressScreen(customtkinter.CTkFrame):
     def _worker(self) -> None:
         """Background worker: fetch emails from each folder, apply filters, export."""
         state = self._app.wizard_state
-        client: AOLClient = state["client"]
+        client: IMAPClient = state["client"]
         folders: list[str] = state.get("selected_folders", ["INBOX"])
         filters: FilterParams = state.get("filters", FilterParams())
         formats: list[str] = state.get("formats", ["csv"])
-        output_dir: str = state.get("output_dir", os.path.join(os.path.expanduser("~"), "Desktop", "AOL_Export"))
+        output_dir: str = state.get("output_dir", os.path.join(os.path.expanduser("~"), "Desktop", "Mailpail_Export"))
 
         os.makedirs(output_dir, exist_ok=True)
 
@@ -243,7 +242,7 @@ class ProgressScreen(customtkinter.CTkFrame):
             self._ui(self._on_error, str(exc))
         finally:
             if self._log_handler is not None:
-                logging.getLogger("aol_email_exporter").removeHandler(self._log_handler)
+                logging.getLogger("mailpail").removeHandler(self._log_handler)
                 self._log_handler = None
 
     def _update_status(self, folder_text: str, count_text: str) -> None:

@@ -7,7 +7,7 @@ import datetime
 
 import pytest
 
-from aol_email_exporter.models import EmailRecord, ExportConfig
+from mailpail.models import EmailRecord, ExportConfig
 
 
 def _make_record(

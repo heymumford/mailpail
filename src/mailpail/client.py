@@ -8,13 +8,13 @@ from types import TracebackType
 
 from imap_tools import AND, MailBox, MailMessage
 
-from aol_email_exporter.models import EmailRecord, FilterParams
+from mailpail.models import EmailRecord, FilterParams
 
 logger = logging.getLogger(__name__)
 
 
-class AOLClient:
-    """IMAP client wrapper for AOL mail using imap_tools.
+class IMAPClient:
+    """IMAP client wrapper using imap_tools.
 
     Satisfies the ``EmailProvider`` Protocol defined in ``providers.py``.
     """
@@ -38,7 +38,7 @@ class AOLClient:
 
     # -- Context manager --------------------------------------------------
 
-    def __enter__(self) -> AOLClient:
+    def __enter__(self) -> IMAPClient:
         self.connect()
         return self
 
@@ -62,8 +62,8 @@ class AOLClient:
         except Exception as exc:
             msg = (
                 f"Failed to connect to {self._server}:{self._port} — "
-                "verify your AOL app password (not your regular password). "
-                "Generate one at https://login.aol.com/account/security/app-passwords"
+                "verify your app password (not your regular password). "
+                "Check your email provider's app password settings."
             )
             logger.error(msg)
             raise ConnectionError(msg) from exc
