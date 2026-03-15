@@ -128,9 +128,9 @@ class FolderScreen(customtkinter.CTkFrame):
         """Run the folder fetch off the main thread."""
         try:
             folders = client.list_folders()  # type: ignore[union-attr]
-            self.after(0, self._populate_folders, folders)
+            self._app.run_on_main(self._populate_folders, folders)
         except Exception as exc:
-            self.after(0, self._on_folder_error, str(exc))
+            self._app.run_on_main(self._on_folder_error, str(exc))
 
     def _populate_folders(self, folders: list[str]) -> None:
         """Build checkboxes for each folder (runs on main thread)."""

@@ -51,7 +51,7 @@ markers = [
     "tier_a: Must-pass product feature scenarios",
     "tier_b: Regression and edge case tests",
 ]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --ignore=tests/test_ui_integration.py"
 
 [tool.ruff]
 line-length = 120

@@ -168,26 +168,33 @@ class LoginScreen(customtkinter.CTkFrame):
         self._form_card = form_card
 
     def on_show(self) -> None:
-        """Called when this screen becomes visible. Detect existing sessions."""
+        """Called when this screen becomes visible."""
         fade_in(self, steps=10, delay_ms=30)
-        self._detect_session()
+        # Run cookie detection in background — it probes multiple browsers
+        # and can take several seconds.
+        self._session_card.grid_forget()
+        self._detected_session = None
+        thread = threading.Thread(target=self._detect_session_bg, daemon=True)
+        thread.start()
 
-    def _detect_session(self) -> None:
-        """Check for an existing AOL browser session."""
+    def _detect_session_bg(self) -> None:
+        """Check for an existing AOL browser session (background thread)."""
         try:
             from aol_email_exporter.cookie_auth import detect_aol_session
 
             session = detect_aol_session()
             if session is not None:
-                self._session_card.grid(row=2, column=0, padx=60, pady=(0, 12), sticky="ew")
-                self._session_label.configure(text=f"\u2705 We found your AOL session! Email: {session.username}")
-                self._detected_session = session
-            else:
-                self._session_card.grid_forget()
-                self._detected_session = None
-        except (ImportError, Exception):
-            self._session_card.grid_forget()
-            self._detected_session = None
+                self._app.run_on_main(self._show_session_card, session)
+        except Exception:
+            pass
+
+    def _show_session_card(self, session: object) -> None:
+        """Display the detected session card (main thread)."""
+        self._detected_session = session
+        self._session_card.grid(row=2, column=0, padx=60, pady=(0, 12), sticky="ew")
+        self._session_label.configure(
+            text=f"\u2705 We found your AOL session in {session.browser}! Email: {session.username}"  # type: ignore[union-attr]
+        )
 
     def _use_detected_session(self) -> None:
         """Auto-fill email from detected browser session."""
@@ -227,11 +234,10 @@ class LoginScreen(customtkinter.CTkFrame):
         try:
             client = AOLClient(username=email, password=password)
             client.connect()
-            # Store the client for later screens
             self._client = client
-            self.after(0, self._on_connection_success, email, password)
+            self._app.run_on_main(self._on_connection_success, email, password)
         except Exception as exc:
-            self.after(0, self._on_connection_failure, str(exc))
+            self._app.run_on_main(self._on_connection_failure, str(exc))
 
     def _on_connection_success(self, email: str, password: str) -> None:
         """Update UI after successful connection (runs on main thread)."""

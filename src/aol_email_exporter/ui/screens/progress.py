@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 import os
 import threading
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import customtkinter
 
@@ -137,12 +137,11 @@ class ProgressScreen(customtkinter.CTkFrame):
         self._start_download()
 
     def _append_log(self, message: str) -> None:
-        """Append a message to the log preview (main thread safe)."""
+        """Append a message to the log preview (thread-safe)."""
 
         def _do() -> None:
             self._log_text.configure(state="normal")
             self._log_text.insert("end", message + "\n")
-            # Keep only last 5 lines
             lines = self._log_text.get("1.0", "end").strip().split("\n")
             if len(lines) > 5:
                 self._log_text.delete("1.0", "end")
@@ -150,7 +149,7 @@ class ProgressScreen(customtkinter.CTkFrame):
             self._log_text.see("end")
             self._log_text.configure(state="disabled")
 
-        self.after(0, _do)
+        self._app.run_on_main(_do)
 
     def _start_download(self) -> None:
         """Launch the download/export worker thread."""
@@ -162,6 +161,10 @@ class ProgressScreen(customtkinter.CTkFrame):
         self._worker_thread = threading.Thread(target=self._worker, daemon=True)
         self._worker_thread.start()
 
+    def _ui(self, func: Any, *args: Any) -> None:
+        """Thread-safe UI update — posts to the app's main-thread queue."""
+        self._app.run_on_main(func, *args)
+
     def _worker(self) -> None:
         """Background worker: fetch emails from each folder, apply filters, export."""
         state = self._app.wizard_state
@@ -171,7 +174,6 @@ class ProgressScreen(customtkinter.CTkFrame):
         formats: list[str] = state.get("formats", ["csv"])
         output_dir: str = state.get("output_dir", os.path.join(os.path.expanduser("~"), "Desktop", "AOL_Export"))
 
-        # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
 
         all_records = []
@@ -179,14 +181,12 @@ class ProgressScreen(customtkinter.CTkFrame):
         results: list[ExportResult] = []
 
         try:
-            # Phase 1: Fetch emails from each folder
             for folder_idx, folder_name in enumerate(folders):
                 if self._cancel_event.is_set():
-                    self.after(0, self._on_cancelled)
+                    self._ui(self._on_cancelled)
                     return
 
-                self.after(
-                    0,
+                self._ui(
                     self._update_status,
                     f"Downloading from: {folder_name}",
                     f"Folder {folder_idx + 1} of {total_folders}",
@@ -206,51 +206,42 @@ class ProgressScreen(customtkinter.CTkFrame):
                 all_records.extend(records)
 
                 progress = (folder_idx + 1) / total_folders * 0.7
-                self.after(0, self._set_progress, progress)
-                self.after(
-                    0,
-                    self._update_count,
-                    f"Downloaded {len(all_records):,} emails so far",
-                )
+                self._ui(self._set_progress, progress)
+                self._ui(self._update_count, f"Downloaded {len(all_records):,} emails so far")
 
             if self._cancel_event.is_set():
-                self.after(0, self._on_cancelled)
+                self._ui(self._on_cancelled)
                 return
 
-            # Phase 2: Export
-            self.after(0, self._update_status, "Exporting...", f"{len(all_records):,} emails total")
+            self._ui(self._update_status, "Exporting...", f"{len(all_records):,} emails total")
 
-            export_config = ExportConfig(
-                output_dir=output_dir,
-                formats=tuple(formats),
-            )
+            export_config = ExportConfig(output_dir=output_dir, formats=tuple(formats))
 
             for fmt_idx, fmt_name in enumerate(formats):
                 if self._cancel_event.is_set():
-                    self.after(0, self._on_cancelled)
+                    self._ui(self._on_cancelled)
                     return
 
-                self.after(0, self._update_status, f"Exporting as {fmt_name}...", "")
+                self._ui(self._update_status, f"Exporting as {fmt_name}...", "")
 
                 exporter = get_exporter(fmt_name)
                 result = exporter.export(all_records, export_config)
                 results.append(result)
 
                 progress = 0.7 + ((fmt_idx + 1) / len(formats)) * 0.3
-                self.after(0, self._set_progress, progress)
+                self._ui(self._set_progress, progress)
 
-            # Done
             state["results"] = results
             state["total_emails"] = len(all_records)
-            self.after(0, self._set_progress, 1.0)
-            self.after(0, self._update_status, "Export complete!", "")
-            self.after(1000, self._on_complete)
+            self._ui(self._set_progress, 1.0)
+            self._ui(self._update_status, "Export complete!", "")
+            # Delay advance to Complete screen
+            self._app.run_on_main(lambda: self.after(1000, self._on_complete))
 
         except Exception as exc:
             logger.exception("Export failed")
-            self.after(0, self._on_error, str(exc))
+            self._ui(self._on_error, str(exc))
         finally:
-            # Remove log handler
             if self._log_handler is not None:
                 logging.getLogger("aol_email_exporter").removeHandler(self._log_handler)
                 self._log_handler = None

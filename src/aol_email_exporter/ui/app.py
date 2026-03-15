@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import platform
+import queue
 import tkinter as tk
 import webbrowser
 from typing import Any
@@ -48,6 +49,11 @@ class AOLExporterApp(customtkinter.CTk):
         # Shared state between wizard screens
         self.wizard_state: dict[str, Any] = {}
         self._current_step = 0
+
+        # Thread-safe task queue — background threads post here,
+        # main loop drains it every 50ms.
+        self._task_queue: queue.Queue[tuple[Any, tuple]] = queue.Queue()
+        self._start_queue_polling()
 
         # Platform-native menu bar
         self._build_menu_bar()
@@ -394,6 +400,32 @@ class AOLExporterApp(customtkinter.CTk):
 
     def enable_back(self) -> None:
         self._back_btn.configure(state="normal")
+
+    # -- Thread-safe scheduling ---------------------------------------------
+
+    def run_on_main(self, func: Any, *args: Any) -> None:
+        """Schedule *func(*args)* to run on the main/UI thread.
+
+        Safe to call from any thread.  The main loop drains the queue
+        every 50 ms.
+        """
+        self._task_queue.put((func, args))
+
+    def _start_queue_polling(self) -> None:
+        self._poll_task_queue()
+
+    def _poll_task_queue(self) -> None:
+        try:
+            while True:
+                func, args = self._task_queue.get_nowait()
+                func(*args)
+        except queue.Empty:
+            pass
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
+        self.after(50, self._poll_task_queue)
 
 
 def launch_gui() -> None:
