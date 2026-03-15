@@ -12,7 +12,7 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 
-from aol_email_exporter.models import EmailRecord, ExportConfig, ExportResult
+from mailpail.models import EmailRecord, ExportConfig, ExportResult
 
 logger = logging.getLogger(__name__)
 

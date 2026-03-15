@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from aol_email_exporter.exporters.csv_export import CsvExporter
-from aol_email_exporter.models import ExportConfig
+from mailpail.exporters.csv_export import CsvExporter
+from mailpail.models import ExportConfig
 
 pytestmark = pytest.mark.tier_a
 

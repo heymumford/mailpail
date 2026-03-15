@@ -9,20 +9,20 @@ from typing import TYPE_CHECKING
 
 import customtkinter
 
-from aol_email_exporter.client import AOLClient
-from aol_email_exporter.ui.theme import COLORS, FONTS, ICONS, fade_in
+from mailpail.client import IMAPClient
+from mailpail.ui.theme import COLORS, FONTS, ICONS
 
 if TYPE_CHECKING:
-    from aol_email_exporter.ui.app import AOLExporterApp
+    from mailpail.ui.app import MailpailApp
 
 
 class LoginScreen(customtkinter.CTkFrame):
-    """Wizard step 2 — AOL credentials and connection test."""
+    """Wizard step 2 — credentials and connection test."""
 
-    def __init__(self, parent: customtkinter.CTkFrame, app: AOLExporterApp) -> None:
+    def __init__(self, parent: customtkinter.CTkFrame, app: MailpailApp) -> None:
         super().__init__(parent, fg_color=COLORS["bg"])
         self._app = app
-        self._client: AOLClient | None = None
+        self._client: IMAPClient | None = None
         self._testing = False
         self._build()
 
@@ -44,7 +44,7 @@ class LoginScreen(customtkinter.CTkFrame):
 
         customtkinter.CTkLabel(
             header_frame,
-            text="Sign In to AOL",
+            text="Sign In",
             font=(FONTS["header"][0], FONTS["header"][1], "bold"),
             text_color=COLORS["fg"],
         ).pack(side="left")
@@ -52,7 +52,7 @@ class LoginScreen(customtkinter.CTkFrame):
         # Session detection card (hidden initially)
         self._session_card = customtkinter.CTkFrame(
             self,
-            fg_color="#E8F5E9",
+            fg_color=COLORS["success_bg"],
             corner_radius=12,
             border_width=1,
             border_color=COLORS["success"],
@@ -72,8 +72,8 @@ class LoginScreen(customtkinter.CTkFrame):
             text="Use This Account",
             font=FONTS["label"],
             fg_color=COLORS["success"],
-            hover_color="#1E8449",
-            text_color="#FFFFFF",
+            hover_color=COLORS["success_hover"],
+            text_color=COLORS["button_text"],
             corner_radius=8,
             height=36,
             command=self._use_detected_session,
@@ -101,7 +101,7 @@ class LoginScreen(customtkinter.CTkFrame):
 
         self._email_entry = customtkinter.CTkEntry(
             form_card,
-            placeholder_text="your.email@aol.com",
+            placeholder_text="your.email@example.com",
             font=FONTS["body"],
             height=44,
             corner_radius=8,
@@ -130,7 +130,7 @@ class LoginScreen(customtkinter.CTkFrame):
         # Help link
         help_link = customtkinter.CTkLabel(
             form_card,
-            text="Need an app password? Create one at AOL \u2197",
+            text="Need an app password? Check your provider's settings \u2197",
             font=FONTS["small"],
             text_color=COLORS["accent"],
             cursor="hand2",
@@ -148,7 +148,7 @@ class LoginScreen(customtkinter.CTkFrame):
             font=FONTS["body"],
             fg_color=COLORS["accent"],
             hover_color=COLORS["accent_hover"],
-            text_color="#FFFFFF",
+            text_color=COLORS["button_text"],
             corner_radius=8,
             height=44,
             width=200,
@@ -169,7 +169,6 @@ class LoginScreen(customtkinter.CTkFrame):
 
     def on_show(self) -> None:
         """Called when this screen becomes visible."""
-        fade_in(self, steps=10, delay_ms=30)
         # Run cookie detection in background — it probes multiple browsers
         # and can take several seconds.
         self._session_card.grid_forget()
@@ -178,11 +177,11 @@ class LoginScreen(customtkinter.CTkFrame):
         thread.start()
 
     def _detect_session_bg(self) -> None:
-        """Check for an existing AOL browser session (background thread)."""
+        """Check for an existing browser session (background thread)."""
         try:
-            from aol_email_exporter.cookie_auth import detect_aol_session
+            from mailpail.cookie_auth import detect_browser_session
 
-            session = detect_aol_session()
+            session = detect_browser_session()
             if session is not None:
                 self._app.run_on_main(self._show_session_card, session)
         except Exception:
@@ -193,7 +192,7 @@ class LoginScreen(customtkinter.CTkFrame):
         self._detected_session = session
         self._session_card.grid(row=2, column=0, padx=60, pady=(0, 12), sticky="ew")
         self._session_label.configure(
-            text=f"\u2705 We found your AOL session in {session.browser}! Email: {session.username}"  # type: ignore[union-attr]
+            text=f"\u2705 We found your session in {session.browser}! Email: {session.username}"  # type: ignore[union-attr]
         )
 
     def _use_detected_session(self) -> None:
@@ -224,7 +223,7 @@ class LoginScreen(customtkinter.CTkFrame):
 
         self._testing = True
         self._test_btn.configure(state="disabled", text="Connecting...")
-        self._status_label.configure(text="Connecting to AOL...", text_color=COLORS["subtle"])
+        self._status_label.configure(text="Connecting...", text_color=COLORS["subtle"])
 
         thread = threading.Thread(target=self._run_connection_test, args=(email, password), daemon=True)
         thread.start()
@@ -232,7 +231,7 @@ class LoginScreen(customtkinter.CTkFrame):
     def _run_connection_test(self, email: str, password: str) -> None:
         """Execute connection test off the main thread."""
         try:
-            client = AOLClient(username=email, password=password)
+            client = IMAPClient(username=email, password=password)
             client.connect()
             self._client = client
             self._app.run_on_main(self._on_connection_success, email, password)

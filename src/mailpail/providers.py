@@ -1,7 +1,7 @@
 # Copyright (C) 2026+ Eric C. Mumford <eric@mumfordengineering.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Email provider abstraction — AOL is the first adapter.
+"""Email provider abstraction.
 
 To add a new provider (Gmail, Outlook, etc.):
 1. Create a class satisfying the ``EmailProvider`` Protocol.
@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from types import TracebackType
 from typing import Protocol, runtime_checkable
 
-from aol_email_exporter.models import EmailRecord, FilterParams
+from mailpail.models import EmailRecord, FilterParams
 
 
 @runtime_checkable

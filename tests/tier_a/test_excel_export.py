@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from aol_email_exporter.exporters.excel_export import ExcelExporter, ExcelSheetsExporter
-from aol_email_exporter.models import ExportConfig
+from mailpail.exporters.excel_export import ExcelExporter, ExcelSheetsExporter
+from mailpail.models import ExportConfig
 
 openpyxl = pytest.importorskip("openpyxl")
 

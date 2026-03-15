@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from aol_email_exporter.models import EmailRecord, ExportConfig, ExportResult
+from mailpail.models import EmailRecord, ExportConfig, ExportResult
 
 
 @runtime_checkable
@@ -17,9 +17,9 @@ class BaseExporter(Protocol):
 
 # Lazy imports so missing optional deps don't blow up on import.
 def _load_exporters() -> dict[str, type]:
-    from aol_email_exporter.exporters.csv_export import CsvExporter
-    from aol_email_exporter.exporters.excel_export import ExcelExporter, ExcelSheetsExporter
-    from aol_email_exporter.exporters.pdf_export import PdfExporter
+    from mailpail.exporters.csv_export import CsvExporter
+    from mailpail.exporters.excel_export import ExcelExporter, ExcelSheetsExporter
+    from mailpail.exporters.pdf_export import PdfExporter
 
     return {
         "csv": CsvExporter,

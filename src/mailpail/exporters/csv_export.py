@@ -8,7 +8,7 @@ import gzip
 import logging
 from pathlib import Path
 
-from aol_email_exporter.models import EmailRecord, ExportConfig, ExportResult
+from mailpail.models import EmailRecord, ExportConfig, ExportResult
 
 logger = logging.getLogger(__name__)
 

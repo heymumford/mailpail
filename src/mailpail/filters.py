@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from operator import attrgetter
 
-from aol_email_exporter.models import EmailRecord, FilterParams
+from mailpail.models import EmailRecord, FilterParams
 
 logger = logging.getLogger(__name__)
 

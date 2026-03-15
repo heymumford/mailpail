@@ -8,17 +8,17 @@ from typing import TYPE_CHECKING
 
 import customtkinter
 
-from aol_email_exporter.models import FilterParams
-from aol_email_exporter.ui.theme import COLORS, FONTS, ICONS, fade_in
+from mailpail.models import FilterParams
+from mailpail.ui.theme import COLORS, FONTS, ICONS
 
 if TYPE_CHECKING:
-    from aol_email_exporter.ui.app import AOLExporterApp
+    from mailpail.ui.app import MailpailApp
 
 
 class FilterScreen(customtkinter.CTkFrame):
     """Wizard step 4 — optional email filters (dates, sender, subject, unread)."""
 
-    def __init__(self, parent: customtkinter.CTkFrame, app: AOLExporterApp) -> None:
+    def __init__(self, parent: customtkinter.CTkFrame, app: MailpailApp) -> None:
         super().__init__(parent, fg_color=COLORS["bg"])
         self._app = app
         self._build()
@@ -165,7 +165,7 @@ class FilterScreen(customtkinter.CTkFrame):
             text="Skip Filters",
             font=FONTS["label"],
             fg_color="transparent",
-            hover_color="#E0E4EA",
+            hover_color=COLORS["hover"],
             text_color=COLORS["subtle"],
             border_width=1,
             border_color=COLORS["subtle"],
@@ -178,7 +178,6 @@ class FilterScreen(customtkinter.CTkFrame):
 
     def on_show(self) -> None:
         """Called when this screen becomes visible."""
-        fade_in(self, steps=10, delay_ms=30)
 
     def _skip_filters(self) -> None:
         """Skip all filters and advance to next screen."""

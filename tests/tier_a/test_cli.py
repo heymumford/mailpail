@@ -9,7 +9,7 @@ pytestmark = pytest.mark.tier_a
 
 
 def _get_parser():
-    from aol_email_exporter.__main__ import _build_parser
+    from mailpail.__main__ import _build_parser
 
     return _build_parser()
 

@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING
 
 import customtkinter
 
-from aol_email_exporter.ui.theme import COLORS, FONTS, ICONS, fade_in
+from mailpail.ui.theme import COLORS, FONTS, ICONS
 
 if TYPE_CHECKING:
-    from aol_email_exporter.ui.app import AOLExporterApp
+    from mailpail.ui.app import MailpailApp
 
 _FORMAT_OPTIONS: list[dict[str, str]] = [
     {
@@ -45,7 +45,7 @@ _FORMAT_OPTIONS: list[dict[str, str]] = [
 class FormatScreen(customtkinter.CTkFrame):
     """Wizard step 5 — choose export formats and output directory."""
 
-    def __init__(self, parent: customtkinter.CTkFrame, app: AOLExporterApp) -> None:
+    def __init__(self, parent: customtkinter.CTkFrame, app: MailpailApp) -> None:
         super().__init__(parent, fg_color=COLORS["bg"])
         self._app = app
         self._format_vars: dict[str, customtkinter.StringVar] = {}
@@ -104,7 +104,7 @@ class FormatScreen(customtkinter.CTkFrame):
             text_color=COLORS["fg"],
         ).grid(row=0, column=0, padx=(20, 8), pady=16, sticky="w")
 
-        default_dir = os.path.join(os.path.expanduser("~"), "Desktop", "AOL_Export")
+        default_dir = os.path.join(os.path.expanduser("~"), "Desktop", "Mailpail_Export")
         self._dir_entry = customtkinter.CTkEntry(
             dir_frame,
             font=FONTS["label"],
@@ -120,7 +120,7 @@ class FormatScreen(customtkinter.CTkFrame):
             font=FONTS["label"],
             fg_color=COLORS["accent"],
             hover_color=COLORS["accent_hover"],
-            text_color="#FFFFFF",
+            text_color=COLORS["button_text"],
             corner_radius=8,
             height=38,
             width=100,
@@ -179,7 +179,6 @@ class FormatScreen(customtkinter.CTkFrame):
 
     def on_show(self) -> None:
         """Called when this screen becomes visible."""
-        fade_in(self, steps=10, delay_ms=30)
 
     def get_selected_formats(self) -> list[str]:
         """Return list of selected format keys."""

@@ -10,7 +10,7 @@ import logging
 import os
 import sys
 
-from aol_email_exporter import __version__
+from mailpail import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +19,8 @@ _VALID_FORMATS = ("csv", "excel", "excel-sheets", "pdf")
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="aol-email-exporter",
-        description="Download AOL email via IMAP and export to CSV, Excel, or PDF.",
+        prog="mailpail",
+        description="Download email via IMAP and export to CSV, Excel, or PDF.",
     )
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
@@ -31,12 +31,12 @@ def _build_parser() -> argparse.ArgumentParser:
 
     # Connection
     conn = p.add_argument_group("connection")
-    conn.add_argument("-u", "--username", default=None, help="AOL email address")
-    conn.add_argument("-p", "--password", default=None, help="AOL app password")
+    conn.add_argument("-u", "--username", default=None, help="Email address")
+    conn.add_argument("-p", "--password", default=None, help="App password")
     conn.add_argument(
         "--password-env",
-        default="AOL_APP_PASSWORD",
-        help="Environment variable containing the app password (default: AOL_APP_PASSWORD)",
+        default="MAILPAIL_APP_PASSWORD",
+        help="Environment variable containing the app password (default: MAILPAIL_APP_PASSWORD)",
     )
     conn.add_argument("--server", default="export.imap.aol.com", help="IMAP server (default: export.imap.aol.com)")
     conn.add_argument("--port", type=int, default=993, help="IMAP port (default: 993)")
@@ -56,7 +56,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "-f", "--format", nargs="+", choices=_VALID_FORMATS, default=["csv"], help="Export format(s) (default: csv)"
     )
     exp.add_argument("-o", "--output-dir", default="./export", help="Output directory (default: ./export)")
-    exp.add_argument("--prefix", default="aol_export", help="Filename prefix (default: aol_export)")
+    exp.add_argument("--prefix", default="mail_export", help="Filename prefix (default: mail_export)")
     exp.add_argument(
         "--group-by",
         choices=("folder", "sender", "date"),
@@ -100,8 +100,8 @@ def _parse_date(value: str | None) -> datetime.date | None:
 
 def _run_gui() -> None:
     """Launch the graphical wizard."""
-    from aol_email_exporter.logging_config import setup_logging
-    from aol_email_exporter.ui.app import launch_gui
+    from mailpail.logging_config import setup_logging
+    from mailpail.ui.app import launch_gui
 
     setup_logging(level="INFO")
     logger.debug("Launching GUI wizard")
@@ -110,14 +110,14 @@ def _run_gui() -> None:
 
 def _run_cli(args: argparse.Namespace) -> None:
     """Execute the CLI export pipeline."""
-    from aol_email_exporter.client import AOLClient
-    from aol_email_exporter.exporters import get_exporter
-    from aol_email_exporter.filters import apply_filters
-    from aol_email_exporter.logging_config import setup_logging
-    from aol_email_exporter.models import ExportConfig, FilterParams
+    from mailpail.client import IMAPClient
+    from mailpail.exporters import get_exporter
+    from mailpail.filters import apply_filters
+    from mailpail.logging_config import setup_logging
+    from mailpail.models import ExportConfig, FilterParams
 
     setup_logging(level=args.log_level, log_file=args.log_file, syslog=args.syslog)
-    logger.debug("aol-email-exporter %s starting (CLI mode)", __version__)
+    logger.debug("mailpail %s starting (CLI mode)", __version__)
 
     if not args.username:
         print("Error: --username is required in CLI mode.", file=sys.stderr)
@@ -126,7 +126,7 @@ def _run_cli(args: argparse.Namespace) -> None:
     try:
         password = _resolve_password(args)
 
-        with AOLClient(username=args.username, password=password, server=args.server, port=args.port) as client:
+        with IMAPClient(username=args.username, password=password, server=args.server, port=args.port) as client:
             if args.list_folders:
                 folders = client.list_folders()
                 print("Available folders:")

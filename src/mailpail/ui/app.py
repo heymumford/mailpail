@@ -11,14 +11,14 @@ from typing import Any
 
 import customtkinter
 
-from aol_email_exporter.ui.screens.complete import CompleteScreen
-from aol_email_exporter.ui.screens.filters import FilterScreen
-from aol_email_exporter.ui.screens.folders import FolderScreen
-from aol_email_exporter.ui.screens.formats import FormatScreen
-from aol_email_exporter.ui.screens.login import LoginScreen
-from aol_email_exporter.ui.screens.progress import ProgressScreen
-from aol_email_exporter.ui.screens.welcome import WelcomeScreen
-from aol_email_exporter.ui.theme import (
+from mailpail.ui.screens.complete import CompleteScreen
+from mailpail.ui.screens.filters import FilterScreen
+from mailpail.ui.screens.folders import FolderScreen
+from mailpail.ui.screens.formats import FormatScreen
+from mailpail.ui.screens.login import LoginScreen
+from mailpail.ui.screens.progress import ProgressScreen
+from mailpail.ui.screens.welcome import WelcomeScreen
+from mailpail.ui.theme import (
     ACCEL_PREFIX,
     COLORS,
     FONTS,
@@ -27,10 +27,10 @@ from aol_email_exporter.ui.theme import (
 )
 
 _SYSTEM = platform.system()
-_APP_NAME = "AOL Email Exporter"
+_APP_NAME = "Mailpail"
 
 
-class AOLExporterApp(customtkinter.CTk):
+class MailpailApp(customtkinter.CTk):
     """Main wizard application window."""
 
     def __init__(self) -> None:
@@ -138,11 +138,11 @@ class AOLExporterApp(customtkinter.CTk):
             help_menu = tk.Menu(menubar, tearoff=0)
             menubar.add_cascade(label="Help", menu=help_menu)
             help_menu.add_command(label=f"About {_APP_NAME}", command=self._show_about)
-            help_menu.add_command(label="AOL App Password Help", command=self._open_aol_help)
+            help_menu.add_command(label="App Password Help", command=self._open_aol_help)
             help_menu.add_separator()
             help_menu.add_command(
                 label="GitHub Repository",
-                command=lambda: webbrowser.open("https://github.com/heymumford/aol-email-exporter"),
+                command=lambda: webbrowser.open("https://github.com/heymumford/mailpail"),
             )
 
     # -- Menu actions -------------------------------------------------------
@@ -151,10 +151,10 @@ class AOLExporterApp(customtkinter.CTk):
         pass  # placeholder for future settings dialog
 
     def _show_help(self) -> None:
-        webbrowser.open("https://github.com/heymumford/aol-email-exporter")
+        webbrowser.open("https://github.com/heymumford/mailpail")
 
     def _show_about(self) -> None:
-        from aol_email_exporter import __version__
+        from mailpail import __version__
 
         about = customtkinter.CTkToplevel(self)
         about.title(f"About {_APP_NAME}")
@@ -287,7 +287,7 @@ class AOLExporterApp(customtkinter.CTk):
             font=FONTS["body"],
             fg_color=COLORS["accent"],
             hover_color=COLORS["accent_hover"],
-            text_color="#FFFFFF",
+            text_color=COLORS["button_text"],
             corner_radius=10,
             height=44,
             width=120,
@@ -429,6 +429,6 @@ class AOLExporterApp(customtkinter.CTk):
 
 
 def launch_gui() -> None:
-    """Create and run the AOL Email Exporter wizard application."""
-    app = AOLExporterApp()
+    """Create and run the Mailpail wizard application."""
+    app = MailpailApp()
     app.mainloop()
