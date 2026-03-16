@@ -14,7 +14,7 @@ from mailpail import __version__
 
 logger = logging.getLogger(__name__)
 
-_VALID_FORMATS = ("csv", "excel", "excel-sheets", "pdf")
+_VALID_FORMATS = ("csv", "excel", "excel-sheets", "pdf", "mbox", "eml")
 
 
 def _build_parser() -> argparse.ArgumentParser:

@@ -10,6 +10,16 @@ from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
+class Attachment:
+    """An email attachment."""
+
+    filename: str
+    content_type: str
+    payload: bytes
+    size: int
+
+
+@dataclass(frozen=True)
 class EmailRecord:
     """Immutable representation of a fetched email."""
 
@@ -25,6 +35,7 @@ class EmailRecord:
     has_attachments: bool
     message_id: str
     size_bytes: int = 0
+    attachments: tuple[Attachment, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -46,8 +57,9 @@ class ExportConfig:
     output_dir: str = "./export"
     formats: tuple[str, ...] = ("csv",)
     excel_group_by: str = "folder"
-    pdf_title: str = "Email Export"
+    pdf_title: str = "Mailpail Export"
     filename_prefix: str = "mail_export"
+    include_attachments: bool = True
 
 
 @dataclass
@@ -60,3 +72,5 @@ class ExportResult:
     success: bool
     error: str | None = None
     warnings: list[str] = field(default_factory=list)
+    attachment_count: int = 0
+    sha256: str = ""

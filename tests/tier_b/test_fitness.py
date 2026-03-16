@@ -309,6 +309,94 @@ class TestPluginArchitecture:
         assert isinstance(client, IMAPClient)
 
 
+class TestAttachmentModel:
+    """Attachment support in data models."""
+
+    def test_attachment_dataclass(self):
+        from mailpail.models import Attachment
+
+        att = Attachment(filename="test.pdf", content_type="application/pdf", payload=b"data", size=4)
+        assert att.filename == "test.pdf"
+        assert att.size == 4
+
+    def test_email_record_has_attachments_field(self):
+        from mailpail.models import EmailRecord
+
+        fields = {f.name for f in EmailRecord.__dataclass_fields__.values()}
+        assert "attachments" in fields
+
+    def test_export_result_has_sha256(self):
+        from mailpail.models import ExportResult
+
+        fields = {f.name for f in ExportResult.__dataclass_fields__.values()}
+        assert "sha256" in fields
+        assert "attachment_count" in fields
+
+    def test_export_config_has_include_attachments(self):
+        from mailpail.models import ExportConfig
+
+        config = ExportConfig()
+        assert config.include_attachments is True
+
+
+class TestNewExportFormats:
+    """MBOX and EML formats are registered and CLI-accessible."""
+
+    def test_mbox_format_registered(self):
+        from mailpail.exporters import get_exporter
+
+        exporter = get_exporter("mbox")
+        assert exporter is not None
+
+    def test_eml_format_registered(self):
+        from mailpail.exporters import get_exporter
+
+        exporter = get_exporter("eml")
+        assert exporter is not None
+
+    def test_cli_accepts_mbox_format(self):
+        from mailpail.__main__ import _build_parser
+
+        parser = _build_parser()
+        args = parser.parse_args(["--username", "u@x.com", "--format", "mbox"])
+        assert "mbox" in args.format
+
+    def test_cli_accepts_eml_format(self):
+        from mailpail.__main__ import _build_parser
+
+        parser = _build_parser()
+        args = parser.parse_args(["--username", "u@x.com", "--format", "eml"])
+        assert "eml" in args.format
+
+    def test_six_formats_available(self):
+        """All 6 export formats are registered."""
+        from mailpail.exporters import get_exporter
+
+        for fmt in ("csv", "excel", "excel-sheets", "pdf", "mbox", "eml"):
+            assert get_exporter(fmt) is not None
+
+
+class TestLoginProviderDropdown:
+    """LoginScreen uses provider registry."""
+
+    def test_display_name_reflects_server(self):
+        """IMAPClient.display_name is dynamic, not hardcoded AOL."""
+        from mailpail.client import IMAPClient
+
+        client = IMAPClient(username="u", password="p", server="imap.gmail.com")
+        assert "gmail" in client.display_name.lower()
+
+    def test_browser_cookie3_is_optional(self):
+        """browser-cookie3 is in optional deps, not required."""
+        import tomllib
+        from pathlib import Path
+
+        pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
+        data = tomllib.loads(pyproject.read_text())
+        core_deps = [d.split(">=")[0].split("[")[0].strip().lower() for d in data["project"]["dependencies"]]
+        assert "browser-cookie3" not in core_deps
+
+
 class TestPersonaRequirements:
     """Persona-driven acceptance criteria.
 

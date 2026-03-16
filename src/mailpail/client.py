@@ -8,7 +8,7 @@ from types import TracebackType
 
 from imap_tools import AND, MailBox, MailMessage
 
-from mailpail.models import EmailRecord, FilterParams
+from mailpail.models import Attachment, EmailRecord, FilterParams
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class IMAPClient:
 
     @property
     def display_name(self) -> str:
-        return "AOL Mail"
+        return f"IMAP ({self._server})"
 
     # -- Context manager --------------------------------------------------
 
@@ -137,6 +137,15 @@ class IMAPClient:
 
     @staticmethod
     def _msg_to_record(msg: MailMessage, folder: str) -> EmailRecord:
+        atts = tuple(
+            Attachment(
+                filename=a.filename or "unnamed",
+                content_type=a.content_type or "application/octet-stream",
+                payload=a.payload,
+                size=len(a.payload),
+            )
+            for a in msg.attachments
+        )
         return EmailRecord(
             uid=msg.uid or "",
             date=msg.date,
@@ -150,4 +159,5 @@ class IMAPClient:
             has_attachments=bool(msg.attachments),
             message_id=msg.headers.get("message-id", ("",))[0] if msg.headers.get("message-id") else "",
             size_bytes=len(msg.obj.as_bytes()) if msg.obj else 0,
+            attachments=atts,
         )

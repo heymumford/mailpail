@@ -307,7 +307,6 @@ name = "mailpail"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "browser-cookie3" },
     { name = "customtkinter" },
     { name = "fpdf2" },
     { name = "imap-tools" },
@@ -316,7 +315,11 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+cookies = [
+    { name = "browser-cookie3" },
+]
 dev = [
+    { name = "browser-cookie3" },
     { name = "pyinstaller" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -326,7 +329,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "browser-cookie3", specifier = ">=0.20.0" },
+    { name = "browser-cookie3", marker = "extra == 'cookies'", specifier = ">=0.20.0" },
+    { name = "browser-cookie3", marker = "extra == 'dev'", specifier = ">=0.20.0" },
     { name = "customtkinter", specifier = ">=5.2.0" },
     { name = "fpdf2", specifier = ">=2.8.0" },
     { name = "imap-tools", specifier = ">=1.7.0" },
@@ -338,7 +342,7 @@ requires-dist = [
     { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.5" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["cookies", "dev"]
 
 [[package]]
 name = "openpyxl"
