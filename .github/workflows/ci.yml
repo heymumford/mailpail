@@ -37,7 +37,7 @@ jobs:
       - uses: extractions/setup-just@v2
       - run: uv sync --all-extras
       - run: just test-a
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-a-results-${{ matrix.os }}-py${{ matrix.python-version }}
