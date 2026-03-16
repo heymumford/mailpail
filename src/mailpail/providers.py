@@ -1,12 +1,18 @@
 # Copyright (C) 2026+ Eric C. Mumford <eric@mumfordengineering.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Email provider abstraction.
+"""Email provider abstraction and registry.
 
-To add a new provider (Gmail, Outlook, etc.):
-1. Create a class satisfying the ``EmailProvider`` Protocol.
-2. Register it in ``PROVIDERS``.
+To add a new provider:
+1. Create a ``ProviderDescriptor`` with an ``AuthFlow`` and ``adapter_factory``.
+2. Register it in ``PROVIDERS`` (built-in) or via the ``mailpail.providers``
+   entry point group (plugin).
 3. The GUI and CLI will automatically offer it.
+
+Third-party plugins register via entry points::
+
+    [project.entry-points."mailpail.providers"]
+    my-provider = "my_plugin.descriptor:DESCRIPTOR"
 """
 
 from __future__ import annotations
@@ -15,7 +21,12 @@ from dataclasses import dataclass
 from types import TracebackType
 from typing import Protocol, runtime_checkable
 
+from mailpail.auth import AppPasswordFlow, AuthFlow, Capability, Credential
 from mailpail.models import EmailRecord, FilterParams
+
+# ---------------------------------------------------------------------------
+# EmailProvider Protocol — the contract every adapter must satisfy
+# ---------------------------------------------------------------------------
 
 
 @runtime_checkable
@@ -43,19 +54,86 @@ class EmailProvider(Protocol):
     ) -> None: ...
 
 
+# ---------------------------------------------------------------------------
+# AdapterFactory Protocol — callable that produces an EmailProvider
+# ---------------------------------------------------------------------------
+
+
+class AdapterFactory(Protocol):
+    """Callable that creates an EmailProvider from a Credential."""
+
+    def __call__(self, credential: Credential) -> EmailProvider: ...
+
+
+# ---------------------------------------------------------------------------
+# ProviderDescriptor — the full description of a provider
+# ---------------------------------------------------------------------------
+
+
 @dataclass(frozen=True)
-class ProviderInfo:
-    """Registry entry for an email provider."""
+class ProviderDescriptor:
+    """Everything the core needs to know about a provider.
+
+    Built-in providers use the ``ProviderInfo()`` convenience function
+    which creates a ProviderDescriptor with IMAP defaults.
+    Plugin providers construct this directly.
+    """
 
     key: str
     name: str
-    server: str
-    port: int
     help_url: str
+    auth_flow: AuthFlow
+    capabilities: Capability
+    adapter_factory: AdapterFactory
+    # IMAP-specific fields (populated for built-in IMAP providers, empty for API-based)
+    server: str = ""
+    port: int = 993
 
 
-# Provider registry — add new services here.
-PROVIDERS: dict[str, ProviderInfo] = {
+# ---------------------------------------------------------------------------
+# ProviderInfo — backward-compatible convenience constructor
+# ---------------------------------------------------------------------------
+
+
+def ProviderInfo(
+    key: str,
+    name: str,
+    server: str,
+    port: int,
+    help_url: str,
+) -> ProviderDescriptor:
+    """Create a ProviderDescriptor for an IMAP+app-password provider.
+
+    Backward-compatible with the old ``ProviderInfo`` dataclass —
+    same positional arguments, same attribute access on the result.
+    """
+    from mailpail.client import IMAPClient
+
+    def _factory(credential: Credential) -> IMAPClient:
+        return IMAPClient(
+            username=credential.data["username"],
+            password=credential.data["password"],
+            server=server,
+            port=port,
+        )
+
+    return ProviderDescriptor(
+        key=key,
+        name=name,
+        help_url=help_url,
+        auth_flow=AppPasswordFlow(provider_key=key, help_url=help_url),
+        capabilities=Capability.NONE,
+        adapter_factory=_factory,
+        server=server,
+        port=port,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Provider registry — built-in providers
+# ---------------------------------------------------------------------------
+
+PROVIDERS: dict[str, ProviderDescriptor] = {
     "aol": ProviderInfo(
         key="aol",
         name="AOL Mail",
@@ -96,8 +174,8 @@ PROVIDERS: dict[str, ProviderInfo] = {
 DEFAULT_PROVIDER = "aol"
 
 
-def get_provider_info(key: str = DEFAULT_PROVIDER) -> ProviderInfo:
-    """Look up a registered provider by key.  Raises KeyError if unknown."""
+def get_provider_info(key: str = DEFAULT_PROVIDER) -> ProviderDescriptor:
+    """Look up a registered provider by key. Raises KeyError if unknown."""
     info = PROVIDERS.get(key)
     if info is None:
         raise KeyError(f"Unknown provider '{key}'. Available: {', '.join(sorted(PROVIDERS))}")

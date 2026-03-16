@@ -126,23 +126,22 @@ class TestNoFadeIn:
 class TestProviders:
     """Provider registry completeness."""
 
-    def test_all_providers_registered(self):
+    def test_builtin_providers_present(self):
+        """Built-in providers must be a subset of registered providers."""
         from mailpail.providers import PROVIDERS
 
-        expected = {"aol", "gmail", "outlook", "yahoo", "imap"}
-        assert set(PROVIDERS.keys()) == expected
+        required = {"aol", "gmail", "outlook", "yahoo", "imap"}
+        assert required <= set(PROVIDERS.keys()), "Built-in providers missing from registry"
 
-    def test_all_providers_have_server(self):
-        """All providers except 'imap' must have a server set."""
+    def test_all_builtin_imap_providers_have_server(self):
+        """All IMAP providers except 'imap' must have a server set."""
         from mailpail.providers import PROVIDERS
 
-        for key, info in PROVIDERS.items():
-            if key == "imap":
-                continue
-            assert info.server, f"Provider {key!r} has no server"
+        for key in ("aol", "gmail", "outlook", "yahoo"):
+            assert PROVIDERS[key].server, f"Provider {key!r} has no server"
 
     def test_provider_flag_accepted(self):
-        """CLI accepts --provider flag."""
+        """CLI accepts --provider flag for all built-in providers."""
         from mailpail.__main__ import _build_parser
 
         parser = _build_parser()
@@ -157,6 +156,157 @@ class TestProviders:
         assert hasattr(BaseScreen, "screen_icon")
         assert hasattr(BaseScreen, "screen_title")
         assert hasattr(BaseScreen, "make_card")
+
+    def test_all_providers_are_descriptors(self):
+        """Every registered provider is a ProviderDescriptor."""
+        from mailpail.providers import PROVIDERS, ProviderDescriptor
+
+        for key, desc in PROVIDERS.items():
+            assert isinstance(desc, ProviderDescriptor), f"{key!r} is {type(desc).__name__}, not ProviderDescriptor"
+
+    def test_all_providers_have_auth_flow(self):
+        """Every provider has an auth_flow with form_fields()."""
+        from mailpail.providers import PROVIDERS
+
+        for key, desc in PROVIDERS.items():
+            assert hasattr(desc.auth_flow, "form_fields"), f"{key!r} auth_flow missing form_fields()"
+            fields = desc.auth_flow.form_fields()
+            assert isinstance(fields, list), f"{key!r} form_fields() did not return a list"
+
+    def test_all_providers_have_adapter_factory(self):
+        """Every provider has a callable adapter_factory."""
+        from mailpail.providers import PROVIDERS
+
+        for key, desc in PROVIDERS.items():
+            assert callable(desc.adapter_factory), f"{key!r} adapter_factory is not callable"
+
+
+class TestPluginArchitecture:
+    """Plugin system structural tests."""
+
+    def test_auth_protocol_contract(self):
+        """AppPasswordFlow satisfies the AuthFlow structural contract."""
+        from mailpail.auth import AppPasswordFlow
+
+        flow = AppPasswordFlow(provider_key="test")
+        assert flow.requires_browser is False
+        fields = flow.form_fields()
+        assert len(fields) == 2
+        assert fields[0].key == "username"
+        assert fields[1].key == "password"
+        assert fields[1].secret is True
+
+    def test_app_password_acquire(self):
+        """AppPasswordFlow.acquire produces a valid Credential."""
+        from mailpail.auth import AppPasswordFlow, Credential
+
+        flow = AppPasswordFlow(provider_key="aol")
+        cred = flow.acquire({"username": "user@aol.com", "password": "secret"})
+        assert isinstance(cred, Credential)
+        assert cred.provider_key == "aol"
+        assert cred.data["username"] == "user@aol.com"
+        assert cred.data["password"] == "secret"
+
+    def test_app_password_acquire_rejects_empty(self):
+        """AppPasswordFlow.acquire raises on missing fields."""
+        from mailpail.auth import AppPasswordFlow, AuthError
+
+        flow = AppPasswordFlow(provider_key="test")
+        with pytest.raises(AuthError):
+            flow.acquire({"username": "", "password": ""})
+
+    def test_app_password_refresh_is_noop(self):
+        """AppPasswordFlow.refresh returns the same credential."""
+        from mailpail.auth import AppPasswordFlow, Credential
+
+        flow = AppPasswordFlow(provider_key="test")
+        cred = Credential(provider_key="test", data={"username": "u", "password": "p"})
+        assert flow.refresh(cred) is cred
+
+    def test_credential_is_frozen(self):
+        """Credential is immutable."""
+        from mailpail.auth import Credential
+
+        cred = Credential(provider_key="test", data={"k": "v"})
+        with pytest.raises(AttributeError):
+            cred.provider_key = "changed"  # type: ignore[misc]
+
+    def test_capability_flags_composable(self):
+        """Capability flags can be combined with bitwise OR."""
+        from mailpail.auth import Capability
+
+        combined = Capability.SEARCH | Capability.ATTACHMENTS
+        assert Capability.SEARCH in combined
+        assert Capability.ATTACHMENTS in combined
+        assert Capability.LABELS not in combined
+
+    def test_memory_store_roundtrip(self):
+        """MemoryStore save/load/delete cycle."""
+        from mailpail.auth import Credential
+        from mailpail.credentials import MemoryStore
+
+        store = MemoryStore()
+        cred = Credential(provider_key="test", data={"username": "u", "password": "p"})
+
+        assert store.load("test") is None
+        store.save(cred)
+        loaded = store.load("test")
+        assert loaded is not None
+        assert loaded.data["username"] == "u"
+        store.delete("test")
+        assert store.load("test") is None
+
+    def test_file_store_roundtrip(self, tmp_path):
+        """FileStore save/load/delete cycle."""
+        from mailpail.auth import Credential
+        from mailpail.credentials import FileStore
+
+        store = FileStore(path=tmp_path / "creds.json")
+        cred = Credential(provider_key="mykey", data={"token": "abc123"})
+
+        assert store.load("mykey") is None
+        store.save(cred)
+        loaded = store.load("mykey")
+        assert loaded is not None
+        assert loaded.data["token"] == "abc123"
+        store.delete("mykey")
+        assert store.load("mykey") is None
+
+    def test_file_store_permissions(self, tmp_path):
+        """FileStore sets 0600 permissions on the credential file."""
+        import stat
+
+        from mailpail.auth import Credential
+        from mailpail.credentials import FileStore
+
+        path = tmp_path / "creds.json"
+        store = FileStore(path=path)
+        store.save(Credential(provider_key="x", data={"a": "b"}))
+        mode = stat.S_IMODE(path.stat().st_mode)
+        assert mode == 0o600
+
+    def test_load_plugins_idempotent(self):
+        """load_plugins can be called multiple times safely."""
+        from mailpail.plugin import load_plugins
+
+        load_plugins()
+        load_plugins()  # no crash, no duplicate registration
+
+    def test_entry_point_group_name(self):
+        """Entry point group name is correct."""
+        from mailpail.plugin import ENTRY_POINT_GROUP
+
+        assert ENTRY_POINT_GROUP == "mailpail.providers"
+
+    def test_adapter_factory_produces_client(self):
+        """Built-in adapter_factory produces an IMAPClient."""
+        from mailpail.auth import Credential
+        from mailpail.client import IMAPClient
+        from mailpail.providers import PROVIDERS
+
+        cred = Credential(provider_key="aol", data={"username": "u@aol.com", "password": "pass"})
+        client = PROVIDERS["aol"].adapter_factory(cred)
+        assert isinstance(client, IMAPClient)
 
 
 class TestPersonaRequirements:
