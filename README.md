@@ -6,37 +6,36 @@
 
 Carry your mail away in a pail. A friendly wizard to download and export your email to PDF, Excel, and CSV.
 
-![Wizard Screenshot](docs/screenshot.png)
-
 ## Features
 
 - **GUI wizard interface** -- step-by-step guided export
-- **IMAP download** with folder and date-range filters
-- **4 export formats** -- gzipped CSV, Excel (single or grouped sheets), PDF
-- **Browser session detection** -- reuse existing login cookies
 - **Multiple providers** -- AOL, Gmail, Outlook, Yahoo, custom IMAP
+- **4 export formats** -- gzipped CSV, Excel (single or grouped sheets), PDF
+- **Plugin system** -- third-party providers via `pip install mailpail-*`
 - **Cross-platform** -- Windows and POSIX
 - **Windows executable** -- standalone `.exe` releases (no Python required)
 
 ## Quick Start
 
-### Install from pip
-
 ```bash
 pip install mailpail
-mailpail          # launch GUI wizard
-mailpail --cli    # headless mode
+mailpail              # launch GUI wizard
+mailpail --cli        # headless mode
 ```
 
-### Download Windows executable
-
-Grab the latest `.exe` from [Releases](https://github.com/heymumford/mailpail/releases) and run it.
+Or grab the latest `.exe` from [Releases](https://github.com/heymumford/mailpail/releases).
 
 ## CLI Usage
 
 ```bash
-# Export all mail to gzipped CSV
+# Export all mail to gzipped CSV (AOL, default provider)
 mailpail --cli --username user@aol.com --format csv
+
+# Use Gmail instead
+mailpail --cli --username user@gmail.com --provider gmail --format csv
+
+# Outlook
+mailpail --cli --username user@outlook.com --provider outlook --format excel
 
 # Export specific folder to PDF
 mailpail --cli --username user@aol.com --folder Inbox --format pdf
@@ -45,23 +44,36 @@ mailpail --cli --username user@aol.com --folder Inbox --format pdf
 mailpail --cli --username user@aol.com --format excel-sheets \
     --date-from 2024-01-01 --date-to 2025-01-01
 
-# Use browser cookies instead of password prompt
-mailpail --cli --username user@aol.com --use-cookies --format csv
+# Dry run -- show count without exporting
+mailpail --cli --username user@aol.com --dry-run
+
+# Custom IMAP server
+mailpail --cli --username user@example.com --provider imap \
+    --server mail.example.com --port 993 --format csv
 ```
+
+### Provider flag
+
+| Provider | Flag | Server |
+|----------|------|--------|
+| AOL (default) | `--provider aol` | export.imap.aol.com |
+| Gmail | `--provider gmail` | imap.gmail.com |
+| Outlook / Hotmail | `--provider outlook` | outlook.office365.com |
+| Yahoo | `--provider yahoo` | imap.mail.yahoo.com |
+| Custom | `--provider imap --server HOST` | (you specify) |
 
 ## App Password Setup
 
 Most email providers require an **app password** for third-party IMAP access:
 
-**AOL:**
-1. Go to [AOL Account Security](https://login.aol.com/account/security/app-passwords)
-2. Generate an app password
+| Provider | Setup link |
+|----------|-----------|
+| AOL | [AOL Account Security](https://login.aol.com/account/security/app-passwords) |
+| Gmail | [Google App Passwords](https://myaccount.google.com/apppasswords) (requires 2FA) |
+| Outlook | [Microsoft App Passwords](https://support.microsoft.com/en-us/account-billing/manage-app-passwords-for-two-step-verification) |
+| Yahoo | [Yahoo App Passwords](https://help.yahoo.com/kb/generate-manage-third-party-passwords-sln15241.html) |
 
-**Gmail:**
-1. Go to [Google App Passwords](https://myaccount.google.com/apppasswords)
-2. Generate an app password (requires 2FA enabled)
-
-> **Note:** Your regular password will not work for IMAP access. You must use an app password.
+Your regular password will not work for IMAP access. You must use an app password.
 
 ## Export Formats
 
@@ -72,13 +84,35 @@ Most email providers require an **app password** for third-party IMAP access:
 | Excel (grouped) | `--format excel-sheets` | Multi-sheet `.xlsx`, one sheet per folder |
 | PDF | `--format pdf` | One PDF per message, bundled in a directory |
 
+## Plugin System
+
+Mailpail supports third-party provider plugins via Python entry points. Install a plugin and its provider appears in the GUI dropdown and CLI `--provider` flag automatically.
+
+### Writing a plugin
+
+Create a Python package with an entry point in `pyproject.toml`:
+
+```toml
+[project.entry-points."mailpail.providers"]
+my-provider = "my_plugin.descriptor:DESCRIPTOR"
+```
+
+The entry point must resolve to a `ProviderDescriptor` instance. See `src/mailpail/providers.py` for the contract and `src/mailpail/auth.py` for the `AuthFlow` Protocol.
+
+A plugin needs to provide:
+- A `ProviderDescriptor` with `auth_flow`, `capabilities`, and `adapter_factory`
+- An `AuthFlow` implementation (form-based or OAuth browser redirect)
+- An adapter class satisfying the `EmailProvider` Protocol
+
+The core handles discovery, GUI rendering, and credential storage. Your plugin handles authentication and email retrieval.
+
 ## Development
 
 Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 just install    # set up environment
-just test       # run all tests
+just test       # run all tests (100 tests)
 just lint       # check code style
 just format     # fix code style
 just all        # format + lint + test
@@ -87,7 +121,26 @@ just all        # format + lint + test
 ### Test tiers
 
 - **Tier A** (`just test-a`) -- must-pass product feature scenarios
-- **Tier B** (`just test-b`) -- regression and edge case tests
+- **Tier B** (`just test-b`) -- regression, edge cases, fitness tests, persona verification
+
+### Architecture
+
+```
+src/mailpail/
+    __main__.py        # CLI + GUI entry point
+    auth.py            # AuthFlow Protocol, Credential, Capability flags
+    client.py          # IMAPClient (built-in adapter)
+    credentials.py     # Credential storage (env, memory, file)
+    providers.py       # ProviderDescriptor, provider registry
+    plugin.py          # Entry-point-based plugin discovery
+    models.py          # EmailRecord, FilterParams, ExportConfig
+    filters.py         # Client-side email filtering
+    exporters/         # CSV, Excel, PDF exporters
+    ui/                # customtkinter GUI wizard
+        screens/       # 7 wizard screens + BaseScreen skeleton
+        theme.py       # Colors, fonts, icons
+        strings.py     # All user-visible text
+```
 
 ## License
 
