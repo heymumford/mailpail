@@ -1,5 +1,40 @@
 # Contributing
 
+## Dev Setup
+
+1. Install [uv](https://docs.astral.sh/uv/) and [just](https://github.com/casey/just)
+2. Fork and clone the repository
+3. Install dependencies:
+
+```bash
+just install       # uv sync --all-extras
+```
+
+4. Verify your environment:
+
+```bash
+just all           # format + lint + test
+```
+
+## Running Tests
+
+```bash
+just test          # all tests
+just test-a        # Tier A only
+just test-b        # Tier B only
+just lint          # ruff check + format check
+just format        # auto-fix formatting and lint
+```
+
+### Test Tiers
+
+| Tier | Command | Scope | CI Gate |
+|------|---------|-------|---------|
+| **A** | `just test-a` | Must-pass product feature scenarios. These validate core user-facing behavior: IMAP download, export formats, wizard flow. A Tier A failure blocks merge. | Required on all OS + Python matrix |
+| **B** | `just test-b` | Regression and edge case tests. These cover boundary conditions, error handling, and non-critical paths. Tier B failures should be investigated but do not block merge in isolation. | Required on ubuntu, Python 3.12+3.13 |
+
+New features require Tier A tests. Bug fixes require a Tier B regression test that reproduces the bug.
+
 ## Workflow
 
 1. Fork the repository
@@ -20,12 +55,20 @@
   # SPDX-License-Identifier: GPL-3.0-or-later
   ```
 
-## Pull Request Checklist
+## Pull Request Process
+
+1. Fill in the PR description: what changed and why
+2. Verify CI passes (the badge on your PR will show status)
+3. Address review feedback with fixup commits, then squash before merge
+
+### PR Checklist
 
 - [ ] `just all` passes (format + lint + test)
 - [ ] Tier A tests pass
-- [ ] New features have corresponding tests
+- [ ] New features have corresponding Tier A tests
+- [ ] Bug fixes have a Tier B regression test
 - [ ] No credentials or secrets in the diff
+- [ ] SPDX header on new source files
 
 ## License
 
