@@ -16,6 +16,8 @@ just install       # uv sync --all-extras
 just all           # format + lint + test
 ```
 
+> **Without just:** All recipes delegate to `uv run`. See `justfile` for the underlying commands (e.g., `uv run pytest -n auto --cache-clear -m tier_a tests/`).
+
 ## Running Tests
 
 ```bash
@@ -31,7 +33,7 @@ just format        # auto-fix formatting and lint
 | Tier | Command | Scope | CI Gate |
 |------|---------|-------|---------|
 | **A** | `just test-a` | Must-pass product feature scenarios. These validate core user-facing behavior: IMAP download, export formats, wizard flow. A Tier A failure blocks merge. | Required on all OS + Python matrix |
-| **B** | `just test-b` | Regression and edge case tests. These cover boundary conditions, error handling, and non-critical paths. Tier B failures should be investigated but do not block merge in isolation. | Required on ubuntu, Python 3.12+3.13 |
+| **B** | `just test-b` | Regression and edge case tests. These cover boundary conditions, error handling, and non-critical paths. Tier B failures should be investigated but do not block merge in isolation. | Required on Ubuntu, Python 3.12+3.13 |
 
 New features require Tier A tests. Bug fixes require a Tier B regression test that reproduces the bug.
 
@@ -40,10 +42,9 @@ New features require Tier A tests. Bug fixes require a Tier B regression test th
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/your-change`
 3. Make your changes
-4. Run the full quality gate: `just all`
-5. Ensure all Tier A tests pass: `just test-a`
-6. Commit with a meaningful message (why, not what)
-7. Push your branch and open a pull request
+4. Run the full quality gate: `just all` (includes format, lint, and all tests)
+5. Commit with a meaningful message (why, not what)
+6. Push your branch and open a pull request
 
 ## Standards
 
@@ -63,8 +64,7 @@ New features require Tier A tests. Bug fixes require a Tier B regression test th
 
 ### PR Checklist
 
-- [ ] `just all` passes (format + lint + test)
-- [ ] Tier A tests pass
+- [ ] `just all` passes (format + lint + all tests including Tier A)
 - [ ] New features have corresponding Tier A tests
 - [ ] Bug fixes have a Tier B regression test
 - [ ] No credentials or secrets in the diff
