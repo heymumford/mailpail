@@ -18,6 +18,11 @@ _VALID_FORMATS = ("csv", "excel", "excel-sheets", "pdf")
 
 
 def _build_parser() -> argparse.ArgumentParser:
+    from mailpail.plugin import load_plugins
+    from mailpail.providers import PROVIDERS
+
+    load_plugins()  # discover installed plugin providers
+
     p = argparse.ArgumentParser(
         prog="mailpail",
         description="Download email via IMAP and export to CSV, Excel, or PDF.",
@@ -40,7 +45,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     conn.add_argument(
         "--provider",
-        choices=("aol", "gmail", "outlook", "yahoo", "imap"),
+        choices=sorted(PROVIDERS.keys()),
         default="aol",
         help="Email provider (default: aol). Sets server/port automatically unless overridden.",
     )
@@ -107,8 +112,10 @@ def _parse_date(value: str | None) -> datetime.date | None:
 def _run_gui() -> None:
     """Launch the graphical wizard."""
     from mailpail.logging_config import setup_logging
+    from mailpail.plugin import load_plugins
     from mailpail.ui.app import launch_gui
 
+    load_plugins()  # discover installed plugin providers
     setup_logging(level="INFO")
     logger.debug("Launching GUI wizard")
     launch_gui()
@@ -116,7 +123,7 @@ def _run_gui() -> None:
 
 def _run_cli(args: argparse.Namespace) -> None:
     """Execute the CLI export pipeline."""
-    from mailpail.client import IMAPClient
+    from mailpail.auth import Credential
     from mailpail.exporters import get_exporter
     from mailpail.filters import apply_filters
     from mailpail.logging_config import setup_logging
@@ -130,19 +137,35 @@ def _run_cli(args: argparse.Namespace) -> None:
         print("Error: --username is required in CLI mode.", file=sys.stderr)
         sys.exit(1)
 
-    # Resolve server/port from provider unless explicitly overridden.
-    provider = get_provider_info(args.provider)
-    server = args.server if args.server else provider.server
-    port = args.port if args.port else provider.port
+    # Resolve provider descriptor.
+    descriptor = get_provider_info(args.provider)
 
-    if not server:
+    # For IMAP providers, check server is available.
+    server = args.server if args.server else descriptor.server
+    port = args.port if args.port else descriptor.port
+
+    if not server and not descriptor.auth_flow.requires_browser:
         print("Error: --server is required for custom IMAP provider.", file=sys.stderr)
         sys.exit(1)
 
     try:
         password = _resolve_password(args)
 
-        with IMAPClient(username=args.username, password=password, server=server, port=port) as client:
+        # Build credential and create adapter via the provider's factory.
+        credential = Credential(
+            provider_key=descriptor.key,
+            data={"username": args.username, "password": password},
+        )
+
+        # If server/port were overridden, use IMAPClient directly; otherwise use factory.
+        if args.server or args.port:
+            from mailpail.client import IMAPClient
+
+            client_obj = IMAPClient(username=args.username, password=password, server=server, port=port)
+        else:
+            client_obj = descriptor.adapter_factory(credential)
+
+        with client_obj as client:
             if args.list_folders:
                 folders = client.list_folders()
                 print("Available folders:")
