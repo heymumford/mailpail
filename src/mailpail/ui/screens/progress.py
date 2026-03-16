@@ -13,6 +13,7 @@ import customtkinter
 from mailpail.exporters import get_exporter
 from mailpail.filters import apply_filters
 from mailpail.models import ExportConfig, ExportResult, FilterParams
+from mailpail.ui.strings import PROGRESS_REASSURANCE
 from mailpail.ui.theme import COLORS, FONTS, ICONS
 
 if TYPE_CHECKING:
@@ -115,6 +116,14 @@ class ProgressScreen(customtkinter.CTkFrame):
         )
         self._log_text.grid(row=5, column=0, padx=80, pady=(0, 12), sticky="ew")
 
+        # Reassurance text
+        customtkinter.CTkLabel(
+            self,
+            text=PROGRESS_REASSURANCE,
+            font=FONTS["label"],
+            text_color=COLORS["success"],
+        ).grid(row=6, column=0, pady=(0, 12))
+
         # Cancel button
         self._cancel_btn = customtkinter.CTkButton(
             self,
@@ -128,7 +137,7 @@ class ProgressScreen(customtkinter.CTkFrame):
             width=140,
             command=self._cancel_download,
         )
-        self._cancel_btn.grid(row=6, column=0, pady=(0, 8))
+        self._cancel_btn.grid(row=7, column=0, pady=(0, 8))
 
     def on_show(self) -> None:
         """Called when this screen becomes visible. Start the download."""

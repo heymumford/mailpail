@@ -18,7 +18,9 @@ class BaseExporter(Protocol):
 # Lazy imports so missing optional deps don't blow up on import.
 def _load_exporters() -> dict[str, type]:
     from mailpail.exporters.csv_export import CsvExporter
+    from mailpail.exporters.eml_export import EmlExporter
     from mailpail.exporters.excel_export import ExcelExporter, ExcelSheetsExporter
+    from mailpail.exporters.mbox_export import MboxExporter
     from mailpail.exporters.pdf_export import PdfExporter
 
     return {
@@ -26,6 +28,8 @@ def _load_exporters() -> dict[str, type]:
         "excel": ExcelExporter,
         "excel-sheets": ExcelSheetsExporter,
         "pdf": PdfExporter,
+        "mbox": MboxExporter,
+        "eml": EmlExporter,
     }
 
 
