@@ -56,8 +56,9 @@ testpaths = ["tests"]
 markers = [
     "tier_a: Must-pass product feature scenarios",
     "tier_b: Regression and edge case tests",
+    "gui: Requires display + tkinter (skipped in headless CI)",
 ]
-addopts = "-v --tb=short --ignore=tests/test_ui_integration.py"
+addopts = "-v --tb=short --ignore=tests/test_ui_integration.py -m 'not gui'"
 
 [tool.ruff]
 line-length = 120
