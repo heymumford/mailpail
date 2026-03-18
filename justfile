@@ -24,6 +24,12 @@ test-b:
 test-gui:
     uv run python -m pytest --cache-clear -m gui tests/ --override-ini="addopts=-v --tb=short --ignore=tests/test_ui_integration.py"
 
+test-live:
+    uv run python -m pytest --cache-clear -m live tests/ --override-ini="addopts=-v --tb=long --ignore=tests/test_ui_integration.py" -s
+
+test-e2e:
+    uv run python -m pytest --cache-clear -m e2e tests/ --override-ini="addopts=-v --tb=long --ignore=tests/test_ui_integration.py"
+
 test-ci:
     mkdir -p reports
     uv run python -m pytest -n auto --cache-clear --junitxml=reports/junit.xml --cov=mailpail --cov-report=xml:reports/coverage.xml tests/

@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from types import TracebackType
 
-from imap_tools import AND, MailBox, MailMessage
+from imap_tools import AND, MailBox, MailBoxUnencrypted, MailMessage
 
 from mailpail.models import Attachment, EmailRecord, FilterParams
 
@@ -25,12 +25,15 @@ class IMAPClient:
         password: str,
         server: str = "export.imap.aol.com",
         port: int = 993,
+        *,
+        use_ssl: bool = True,
     ) -> None:
         self._username = username
         self._password = password
         self._server = server
         self._port = port
-        self._mailbox: MailBox | None = None
+        self._use_ssl = use_ssl
+        self._mailbox: MailBox | MailBoxUnencrypted | None = None
 
     @property
     def display_name(self) -> str:
@@ -53,18 +56,39 @@ class IMAPClient:
     # -- Connection -------------------------------------------------------
 
     def connect(self) -> None:
-        """Establish an SSL connection and authenticate."""
-        logger.info("Connecting to %s:%d as %s", self._server, self._port, self._username)
+        """Establish a connection and authenticate."""
+        logger.info("Connecting to %s:%d as %s (ssl=%s)", self._server, self._port, self._username, self._use_ssl)
         try:
-            self._mailbox = MailBox(self._server, self._port)
+            if self._use_ssl:
+                self._mailbox = MailBox(self._server, self._port)
+            else:
+                self._mailbox = MailBoxUnencrypted(self._server, self._port)
             self._mailbox.login(self._username, self._password)
             logger.info("Connected successfully")
         except Exception as exc:
-            msg = (
-                f"Failed to connect to {self._server}:{self._port} — "
-                "verify your app password (not your regular password). "
-                "Check your email provider's app password settings."
-            )
+            error_str = str(exc).lower()
+            if "authentication" in error_str or "login" in error_str or "credentials" in error_str:
+                msg = (
+                    f"Authentication failed for {self._username} on {self._server}:{self._port} — "
+                    "verify your app password (not your regular password). "
+                    "Check your email provider's app password settings."
+                )
+            elif "ssl" in error_str or "tls" in error_str or "handshake" in error_str:
+                msg = (
+                    f"SSL/TLS connection failed to {self._server}:{self._port} — "
+                    "verify the server address and port are correct."
+                )
+            elif "refused" in error_str or "timeout" in error_str or "resolve" in error_str:
+                msg = (
+                    f"Could not reach {self._server}:{self._port} — "
+                    "check your internet connection and verify the server address."
+                )
+            else:
+                msg = (
+                    f"Failed to connect to {self._server}:{self._port} — "
+                    "verify your app password and server settings. "
+                    f"Detail: {exc}"
+                )
             logger.error(msg)
             raise ConnectionError(msg) from exc
 
