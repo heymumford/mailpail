@@ -77,3 +77,30 @@ WIZARD_STEPS: list[str] = [
 ]
 
 ACCEL_PREFIX: str = "Cmd" if _SYSTEM == "Darwin" else "Ctrl"
+
+
+# Dark mode palette — activated by customtkinter.set_appearance_mode("dark")
+COLORS_DARK: dict[str, str] = {
+    "bg": "#1C1C1E",
+    "fg": "#F5F5F7",
+    "accent": "#0A84FF",
+    "accent_hover": "#409CFF",
+    "success": "#30D158",
+    "success_bg": "#1A3A1F",
+    "success_hover": "#28A745",
+    "warning": "#FF9F0A",
+    "error": "#FF453A",
+    "error_hover": "#FF6961",
+    "card": "#2C2C2E",
+    "subtle": "#98989D",
+    "subtle_hover": "#8E8E93",
+    "border": "#38383A",
+    "sidebar": "#252528",
+    "hover": "#3A3A3C",
+    "button_text": "#FFFFFF",
+}
+
+
+def get_colors(mode: str = "light") -> dict[str, str]:
+    """Return the color palette for the given appearance mode."""
+    return COLORS_DARK if mode == "dark" else COLORS

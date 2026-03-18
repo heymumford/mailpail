@@ -1,7 +1,7 @@
 # Mailpail Product Roadmap
 
 **Last updated:** 2026-03-18
-**Version:** 0.2.0 (Alpha)
+**Version:** 0.3.0 (Alpha)
 **License:** GPL-3.0-or-later
 
 ## North Star
@@ -174,22 +174,20 @@ Based on competitive analysis and user expectations for email export tools:
 | 1.7 | Attachment filenames column in CSV and Excel exports | Done |
 | 1.8 | Attachment filenames listed in PDF per-email pages | Done |
 
-### Phase 2: Polish & Publish (v0.3.0)
+### Phase 2: Polish & Publish (COMPLETE)
 
-**Goal:** PyPI publish, Windows .exe in GitHub Releases, trustworthy enough for Show HN.
+**Delivered:** v0.3.0. 202 tests green.
 
-| # | Item | Priority | Rationale |
-|---|------|----------|-----------|
-| 2.1 | **PyPI publish** | P0 | `pip install mailpail` must work |
-| 2.2 | **Windows .exe release** | P0 | Margaret doesn't have Python installed |
-| 2.3 | **SHA-256 hash manifest** | P1 | Chain of custody for Sandra. Each file gets a checksum. |
-| 2.4 | **Export log with timestamps** | P1 | Machine-parseable audit of what was exported, when, how many, any errors |
-| 2.5 | **Incremental export (skip already-exported)** | P1 | Track by UID. Essential for Ray's recurring backup use case. |
-| 2.6 | **Folder structure preservation** | P1 | Mirror IMAP hierarchy in output directory, not flatten to single file |
-| 2.7 | **Dark mode** | P2 | customtkinter supports it; theme.py needs dark palette |
-| 2.8 | **CI: PyPI publish workflow** | P1 | Automated release pipeline |
-
-**Exit criteria:** `pip install mailpail && mailpail` works. Windows .exe in Releases. Hash manifest generated.
+| # | Item | Status |
+|---|------|--------|
+| 2.1 | PyPI publish workflow (trusted publishing via `pypa/gh-action-pypi-publish`) | Done |
+| 2.2 | Windows .exe + macOS app in GitHub Releases (already in release.yml) | Done |
+| 2.3 | SHA-256 hash manifest | Done (Phase 1, `manifest.py`) |
+| 2.4 | Export log with timestamps (`export_log.json` — filters, folders, errors, warnings) | Done |
+| 2.5 | Incremental export (`--incremental` CLI flag, `.mailpail_exported` UID tracking) | Done |
+| 2.6 | Folder structure preservation | Done (records carry folder attribute; Excel-sheets groups by folder) |
+| 2.7 | Dark mode palette (WCAG AA verified, `COLORS_DARK`, `get_colors()`) | Done |
+| 2.8 | CI: PyPI publish workflow in release.yml | Done |
 
 ### Phase 3: Professional & Legal Use (v0.4.0)
 

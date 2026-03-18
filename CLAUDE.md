@@ -2,7 +2,7 @@
 
 ## Build
 - `just install` -- set up environment
-- `just test` -- run all tests parallel (173 tests)
+- `just test` -- run all tests parallel (202 tests)
 - `just test-a` -- tier A (must-pass features)
 - `just test-b` -- tier B (regression + fitness + persona)
 - `just lint` -- check code style

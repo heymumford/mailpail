@@ -67,6 +67,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "-f", "--format", nargs="+", choices=_VALID_FORMATS, default=["csv"], help="Export format(s) (default: csv)"
     )
     exp.add_argument("-o", "--output-dir", default="./export", help="Output directory (default: ./export)")
+    exp.add_argument("--incremental", action="store_true", help="Skip already-exported emails (track by UID)")
     exp.add_argument("--prefix", default="mail_export", help="Filename prefix (default: mail_export)")
     exp.add_argument(
         "--group-by",
@@ -123,6 +124,8 @@ def _run_gui() -> None:
 
 def _run_cli(args: argparse.Namespace) -> None:
     """Execute the CLI export pipeline."""
+    from pathlib import Path
+
     from mailpail.auth import Credential
     from mailpail.exporters import get_exporter
     from mailpail.filters import apply_filters
@@ -186,6 +189,16 @@ def _run_cli(args: argparse.Namespace) -> None:
             records = client.fetch_emails(filters)
             records = apply_filters(records, filters)
 
+            if args.incremental:
+                from mailpail.exporters.incremental import filter_new_records
+
+                os.makedirs(args.output_dir, exist_ok=True)
+                before = len(records)
+                records = filter_new_records(records, Path(args.output_dir))
+                skipped = before - len(records)
+                if skipped:
+                    print(f"Incremental: skipping {skipped} already-exported, {len(records)} new.")
+
             if args.dry_run:
                 print(f"Matched {len(records)} email(s) — dry run, nothing exported.")
                 return
@@ -218,9 +231,26 @@ def _run_cli(args: argparse.Namespace) -> None:
                     print(f"  [{fmt}] FAILED: {result.error}")
                     any_failure = True
 
-            # Write manifest
-            from pathlib import Path
+            # Write export log
+            from mailpail.exporters.export_log import write_export_log
 
+            write_export_log(
+                Path(config.output_dir),
+                results,
+                len(records),
+                filters=filters,
+                folders=[args.folder],
+                provider_key=args.provider,
+                username=args.username,
+            )
+
+            # Save incremental UIDs only if all exports succeeded
+            if not any_failure:
+                from mailpail.exporters.incremental import save_exported_uids
+
+                save_exported_uids(Path(config.output_dir), {r.uid for r in records})
+
+            # Write manifest
             from mailpail.exporters.manifest import write_manifest
             from mailpail.exporters.zipper import zip_export
 
