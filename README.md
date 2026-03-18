@@ -4,16 +4,22 @@
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 
-Carry your mail away in a pail. A friendly wizard to download and export your email to PDF, Excel, and CSV.
+Your email, your files, your machine. A friendly wizard to download and export your email to CSV, Excel, PDF, MBOX, and EML — with attachments.
 
 ## Features
 
-- **GUI wizard interface** -- step-by-step guided export
-- **Multiple providers** -- AOL, Gmail, Outlook, Yahoo, custom IMAP
-- **4 export formats** -- gzipped CSV, Excel (single or grouped sheets), PDF
-- **Plugin system** -- third-party providers via `pip install mailpail-*`
-- **Cross-platform** -- Windows and POSIX
-- **Windows executable** -- standalone `.exe` releases (no Python required)
+- **GUI wizard** -- step-by-step guided export for non-technical users
+- **CLI mode** -- scriptable headless export with full filter support
+- **6 export formats** -- gzipped CSV, Excel (single or grouped), PDF, MBOX, EML
+- **Attachment download** -- saves all attachments alongside exports
+- **Filtered export** -- by date range, sender, subject, folder, unread status
+- **5 built-in providers** -- AOL, Gmail, Outlook, Yahoo, custom IMAP
+- **Batch export** -- process multiple accounts from a CSV credential file
+- **Incremental export** -- skip already-exported emails on subsequent runs
+- **Audit trail** -- SHA-256 manifest, timestamped export log, zip archive
+- **Plugin system** -- third-party providers and exporters via entry points
+- **Cross-platform** -- Windows (.exe), POSIX
+- **Dark mode** -- WCAG AA compliant dark palette
 
 ## Quick Start
 
@@ -28,31 +34,38 @@ Or grab the latest `.exe` from [Releases](https://github.com/heymumford/mailpail
 ## CLI Usage
 
 ```bash
-# Export all mail to gzipped CSV (AOL, default provider)
+# Export AOL inbox to gzipped CSV (default)
 mailpail --cli --username user@aol.com --format csv
 
-# Use Gmail instead
-mailpail --cli --username user@gmail.com --provider gmail --format csv
+# Gmail with date range filter
+mailpail --cli --username user@gmail.com --provider gmail \
+    --date-from 2024-01-01 --date-to 2025-01-01 --format csv
 
-# Outlook
-mailpail --cli --username user@outlook.com --provider outlook --format excel
+# Filter by sender and subject
+mailpail --cli --username user@aol.com \
+    --sender "friend@aol.com" --subject "vacation" --format pdf
 
-# Export specific folder to PDF
-mailpail --cli --username user@aol.com --folder Inbox --format pdf
+# Export to multiple formats at once
+mailpail --cli --username user@aol.com --format csv excel pdf
 
-# Export with date range to Excel (grouped by folder)
-mailpail --cli --username user@aol.com --format excel-sheets \
-    --date-from 2024-01-01 --date-to 2025-01-01
+# Incremental export (skip already-downloaded emails)
+mailpail --cli --username user@aol.com --incremental --format csv
 
-# Dry run -- show count without exporting
+# Batch export from CSV credential file
+mailpail --cli --batch accounts.csv --output-dir ./exports
+
+# Dry run (show count without exporting)
 mailpail --cli --username user@aol.com --dry-run
+
+# List available IMAP folders
+mailpail --cli --username user@aol.com --list-folders
 
 # Custom IMAP server
 mailpail --cli --username user@example.com --provider imap \
     --server mail.example.com --port 993 --format csv
 ```
 
-### Provider flag
+### Providers
 
 | Provider | Flag | Server |
 |----------|------|--------|
@@ -62,9 +75,38 @@ mailpail --cli --username user@example.com --provider imap \
 | Yahoo | `--provider yahoo` | imap.mail.yahoo.com |
 | Custom | `--provider imap --server HOST` | (you specify) |
 
+### Export Formats
+
+| Format | Flag | Description |
+|--------|------|-------------|
+| CSV | `--format csv` | Gzipped `.csv.gz` with attachment filenames column |
+| Excel | `--format excel` | Single-sheet `.xlsx` workbook |
+| Excel (grouped) | `--format excel-sheets` | Multi-sheet `.xlsx`, one sheet per folder |
+| PDF | `--format pdf` | One PDF with all emails, attachment names listed |
+| MBOX | `--format mbox` | Standard email archive with embedded attachments |
+| EML | `--format eml` | One `.eml` file per email with attachments |
+
+### Batch Export
+
+Create a CSV file with one account per row:
+
+```csv
+username,password,provider,folder,format
+margaret@aol.com,abcd-efgh-ijkl-mnop,aol,INBOX,csv
+derek@gmail.com,wxyz-1234-5678-abcd,gmail,INBOX,excel
+```
+
+Only `username` and `password` are required. Other columns default to: provider=aol, folder=INBOX, format=csv.
+
+```bash
+mailpail --cli --batch accounts.csv --output-dir ./exports
+```
+
+Each account gets its own subdirectory with export files, manifest, and zip.
+
 ## App Password Setup
 
-Most email providers require an **app password** for third-party IMAP access:
+Most providers require an **app password** (not your regular password):
 
 | Provider | Setup link |
 |----------|-----------|
@@ -73,38 +115,41 @@ Most email providers require an **app password** for third-party IMAP access:
 | Outlook | [Microsoft App Passwords](https://support.microsoft.com/en-us/account-billing/manage-app-passwords-for-two-step-verification) |
 | Yahoo | [Yahoo App Passwords](https://help.yahoo.com/kb/generate-manage-third-party-passwords-sln15241.html) |
 
-Your regular password will not work for IMAP access. You must use an app password.
+## Export Output
 
-## Export Formats
+Every export produces a self-contained directory:
 
-| Format | Flag | Description |
-|--------|------|-------------|
-| CSV | `--format csv` | Gzipped `.csv.gz` file with all messages |
-| Excel | `--format excel` | Single-sheet `.xlsx` workbook |
-| Excel (grouped) | `--format excel-sheets` | Multi-sheet `.xlsx`, one sheet per folder |
-| PDF | `--format pdf` | One PDF per message, bundled in a directory |
+```
+Mailpail_Export/
+    mail_export.csv.gz          # your emails
+    attachments/                # saved attachment files
+        1_invoice.pdf
+        5_beach.jpg
+    manifest.json               # SHA-256 hashes for every file
+    export_log.json             # timestamps, filters, results
+    .mailpail_exported          # UID tracking for incremental
+Mailpail_Export.zip             # single portable archive
+```
 
 ## Plugin System
 
-Mailpail supports third-party provider plugins via Python entry points. Install a plugin and its provider appears in the GUI dropdown and CLI `--provider` flag automatically.
+Mailpail supports two plugin entry point groups:
 
-### Writing a plugin
-
-Create a Python package with an entry point in `pyproject.toml`:
+### Provider plugins (`mailpail.providers`)
 
 ```toml
 [project.entry-points."mailpail.providers"]
 my-provider = "my_plugin.descriptor:DESCRIPTOR"
 ```
 
-The entry point must resolve to a `ProviderDescriptor` instance. See `src/mailpail/providers.py` for the contract and `src/mailpail/auth.py` for the `AuthFlow` Protocol.
+### Exporter plugins (`mailpail.exporters`)
 
-A plugin needs to provide:
-- A `ProviderDescriptor` with `auth_flow`, `capabilities`, and `adapter_factory`
-- An `AuthFlow` implementation (form-based or OAuth browser redirect)
-- An adapter class satisfying the `EmailProvider` Protocol
+```toml
+[project.entry-points."mailpail.exporters"]
+my-format = "my_plugin.exporter:MyExporter"
+```
 
-The core handles discovery, GUI rendering, and credential storage. Your plugin handles authentication and email retrieval.
+Plugins are discovered automatically. Provider plugins appear in the GUI dropdown and CLI `--provider` flag. Exporter plugins appear in `--format` choices.
 
 ## Development
 
@@ -112,7 +157,7 @@ Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 just install    # set up environment
-just test       # run all tests (100 tests)
+just test       # run all tests (217 tests)
 just lint       # check code style
 just format     # fix code style
 just all        # format + lint + test
@@ -120,26 +165,39 @@ just all        # format + lint + test
 
 ### Test tiers
 
-- **Tier A** (`just test-a`) -- must-pass product feature scenarios
-- **Tier B** (`just test-b`) -- regression, edge cases, fitness tests, persona verification
+- **Tier A** (`just test-a`) -- must-pass product feature scenarios (AOL pipeline, exports, attachments, manifest, zip, batch, incremental)
+- **Tier B** (`just test-b`) -- regression, fitness, persona, dark mode, plugin system, GUI integration
 
 ### Architecture
 
 ```
 src/mailpail/
-    __main__.py        # CLI + GUI entry point
-    auth.py            # AuthFlow Protocol, Credential, Capability flags
-    client.py          # IMAPClient (built-in adapter)
-    credentials.py     # Credential storage (env, memory, file)
-    providers.py       # ProviderDescriptor, provider registry
-    plugin.py          # Entry-point-based plugin discovery
-    models.py          # EmailRecord, FilterParams, ExportConfig
-    filters.py         # Client-side email filtering
-    exporters/         # CSV, Excel, PDF exporters
-    ui/                # customtkinter GUI wizard
-        screens/       # 7 wizard screens + BaseScreen skeleton
-        theme.py       # Colors, fonts, icons
-        strings.py     # All user-visible text
+    __main__.py          # CLI + GUI entry point
+    auth.py              # AuthFlow Protocol, Credential, Capability flags
+    batch.py             # Batch export from CSV credential files
+    client.py            # IMAPClient (built-in IMAP adapter)
+    credentials.py       # Credential storage (env, memory, file)
+    filters.py           # Client-side email filtering
+    models.py            # EmailRecord, FilterParams, ExportConfig
+    plugin.py            # Entry-point-based plugin discovery
+    providers.py         # ProviderDescriptor, 5 built-in providers
+    exporters/
+        __init__.py      # Exporter registry + plugin discovery
+        attachments.py   # Save attachments to disk
+        csv_export.py    # Gzipped CSV with attachment column
+        eml_export.py    # Individual .eml files
+        excel_export.py  # Single-sheet and grouped Excel
+        export_log.py    # Timestamped audit log
+        incremental.py   # UID tracking for skip-already-exported
+        manifest.py      # SHA-256 hash manifest
+        mbox_export.py   # Standard MBOX archive
+        pdf_export.py    # PDF document
+        zipper.py        # Zip the export directory
+    ui/
+        app.py           # Main wizard window
+        strings.py       # All user-visible text (i18n-ready)
+        theme.py         # Light + dark palettes (WCAG AA)
+        screens/         # 7 wizard screens + BaseScreen skeleton
 ```
 
 ## License
