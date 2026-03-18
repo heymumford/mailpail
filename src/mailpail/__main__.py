@@ -90,6 +90,12 @@ def _build_parser() -> argparse.ArgumentParser:
     act = p.add_argument_group("actions")
     act.add_argument("--list-folders", action="store_true", help="List available IMAP folders and exit")
     act.add_argument("--dry-run", action="store_true", help="Show matching email count without exporting")
+    act.add_argument(
+        "--batch",
+        default=None,
+        metavar="CSV_FILE",
+        help="Process multiple accounts from a CSV file (columns: username,password,provider,folder,format)",
+    )
 
     return p
 
@@ -122,6 +128,95 @@ def _run_gui() -> None:
     launch_gui()
 
 
+def _run_batch(args: argparse.Namespace) -> None:
+    """Run batch export from a CSV credential file."""
+    from pathlib import Path
+
+    from mailpail.auth import Credential
+    from mailpail.batch import load_batch_file
+    from mailpail.exporters import get_exporter
+    from mailpail.exporters.export_log import write_export_log
+    from mailpail.exporters.incremental import save_exported_uids
+    from mailpail.exporters.manifest import write_manifest
+    from mailpail.exporters.zipper import zip_export
+    from mailpail.filters import apply_filters
+    from mailpail.models import ExportConfig, FilterParams
+    from mailpail.providers import get_provider_info
+
+    batch_path = Path(args.batch)
+    try:
+        entries = load_batch_file(batch_path)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Batch: {len(entries)} account(s) from {batch_path.name}\n")
+    any_failure = False
+
+    for i, entry in enumerate(entries, start=1):
+        print(f"[{i}/{len(entries)}] {entry.username} ({entry.provider})")
+        account_dir = Path(args.output_dir) / entry.username.replace("@", "_at_")
+        account_dir.mkdir(parents=True, exist_ok=True)
+
+        try:
+            descriptor = get_provider_info(entry.provider)
+            credential = Credential(
+                provider_key=descriptor.key,
+                data={"username": entry.username, "password": entry.password},
+            )
+            client_obj = descriptor.adapter_factory(credential)
+
+            with client_obj as client:
+                filters = FilterParams(folder=entry.folder)
+                records = client.fetch_emails(filters)
+                records = apply_filters(records, filters)
+
+                if not records:
+                    print("  No emails matched. Skipping.")
+                    continue
+
+                config = ExportConfig(
+                    output_dir=str(account_dir),
+                    formats=(entry.format,),
+                    filename_prefix=f"{entry.username.split('@')[0]}_{entry.folder}",
+                )
+
+                exporter = get_exporter(entry.format)
+                result = exporter.export(records, config)
+
+                if result.success:
+                    att_info = f" ({result.attachment_count} attachments)" if result.attachment_count else ""
+                    print(f"  {result.record_count} emails -> {result.file_path}{att_info}")
+                else:
+                    print(f"  FAILED: {result.error}")
+                    any_failure = True
+                    continue
+
+                write_export_log(
+                    account_dir,
+                    [result],
+                    len(records),
+                    filters=filters,
+                    folders=[entry.folder],
+                    provider_key=entry.provider,
+                    username=entry.username,
+                )
+                save_exported_uids(account_dir, {r.uid for r in records})
+                write_manifest(account_dir, [result], len(records))
+                zip_export(account_dir)
+
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ERROR: {exc}")
+            any_failure = True
+
+    print()
+    if any_failure:
+        print("Some accounts failed — check output directories for details.")
+        sys.exit(1)
+    else:
+        print(f"All {len(entries)} account(s) exported successfully.")
+
+
 def _run_cli(args: argparse.Namespace) -> None:
     """Execute the CLI export pipeline."""
     from pathlib import Path
@@ -135,6 +230,10 @@ def _run_cli(args: argparse.Namespace) -> None:
 
     setup_logging(level=args.log_level, log_file=args.log_file, syslog=args.syslog)
     logger.debug("mailpail %s starting (CLI mode)", __version__)
+
+    if args.batch:
+        _run_batch(args)
+        return
 
     if not args.username:
         print("Error: --username is required in CLI mode.", file=sys.stderr)
