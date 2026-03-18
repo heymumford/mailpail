@@ -6,6 +6,7 @@ from __future__ import annotations
 import logging
 import os
 import threading
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import customtkinter
@@ -238,6 +239,20 @@ class ProgressScreen(customtkinter.CTkFrame):
 
                 progress = 0.7 + ((fmt_idx + 1) / len(formats)) * 0.3
                 self._ui(self._set_progress, progress)
+
+            # Write manifest
+            from mailpail.exporters.manifest import write_manifest
+
+            manifest_path = write_manifest(Path(output_dir), results, len(all_records))
+            self._ui(self._append_log, f"Manifest: {manifest_path.name}")
+
+            # Zip the entire export
+            from mailpail.exporters.zipper import zip_export
+
+            self._ui(self._update_status, "Creating zip archive...", "")
+            zip_path = zip_export(Path(output_dir))
+            state["zip_path"] = str(zip_path)
+            self._ui(self._append_log, f"Zip: {zip_path.name}")
 
             state["results"] = results
             state["total_emails"] = len(all_records)

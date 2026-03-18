@@ -9,6 +9,7 @@ from pathlib import Path
 
 from fpdf import FPDF
 
+from mailpail.exporters.attachments import attachment_filenames, save_attachments
 from mailpail.models import EmailRecord, ExportConfig, ExportResult
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,11 @@ class PdfExporter:
                 self._write_email(pdf, rec, warnings)
 
             pdf.output(str(out_path))
+
+            att_count = 0
+            if config.include_attachments:
+                att_count = save_attachments(records, out_dir)
+
             logger.info("PDF export complete: %d records -> %s", len(records), out_path)
 
             if warnings:
@@ -48,6 +54,7 @@ class PdfExporter:
                 record_count=len(records),
                 success=True,
                 warnings=warnings,
+                attachment_count=att_count,
             )
         except Exception as exc:  # noqa: BLE001
             logger.error("PDF export failed: %s", exc)
@@ -104,7 +111,10 @@ class PdfExporter:
         if rec.cc:
             pdf.cell(0, 6, f"CC: {rec.cc}", new_x="LMARGIN", new_y="NEXT")
         if rec.has_attachments:
-            pdf.cell(0, 6, "Attachments: Yes", new_x="LMARGIN", new_y="NEXT")
+            att_names = attachment_filenames(rec)
+            pdf.cell(
+                0, 6, f"Attachments: {att_names}" if att_names else "Attachments: Yes", new_x="LMARGIN", new_y="NEXT"
+            )
         pdf.ln(6)
 
         # Body

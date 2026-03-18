@@ -23,6 +23,7 @@ EXPECTED_HEADERS = [
     "body_text",
     "folder",
     "has_attachments",
+    "attachment_files",
     "message_id",
 ]
 

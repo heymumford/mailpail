@@ -12,11 +12,12 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 
+from mailpail.exporters.attachments import attachment_filenames, save_attachments
 from mailpail.models import EmailRecord, ExportConfig, ExportResult
 
 logger = logging.getLogger(__name__)
 
-_HEADERS = ["Date", "From", "To", "CC", "Subject", "Body", "Folder", "Attachments", "Message-ID"]
+_HEADERS = ["Date", "From", "To", "CC", "Subject", "Body", "Folder", "Attachments", "Attachment Files", "Message-ID"]
 _MAX_COL_WIDTH = 50
 _INVALID_SHEET_CHARS = re.compile(r"[\\/*?\[\]:]")
 
@@ -31,6 +32,7 @@ def _record_to_row(rec: EmailRecord) -> list[object]:
         rec.body_text,
         rec.folder,
         "Yes" if rec.has_attachments else "No",
+        attachment_filenames(rec),
         rec.message_id,
     ]
 
@@ -80,12 +82,17 @@ class ExcelExporter:
             _write_sheet(ws, records)
             wb.save(str(out_path))
 
+            att_count = 0
+            if config.include_attachments:
+                att_count = save_attachments(records, out_dir)
+
             logger.info("Excel export complete: %d records -> %s", len(records), out_path)
             return ExportResult(
                 format_name="excel",
                 file_path=str(out_path),
                 record_count=len(records),
                 success=True,
+                attachment_count=att_count,
             )
         except Exception as exc:  # noqa: BLE001
             logger.error("Excel export failed: %s", exc)
@@ -126,6 +133,11 @@ class ExcelSheetsExporter:
                 _write_sheet(ws, group_records)
 
             wb.save(str(out_path))
+
+            att_count = 0
+            if config.include_attachments:
+                att_count = save_attachments(records, out_dir)
+
             logger.info(
                 "Excel (grouped by %s) export complete: %d records, %d sheets -> %s",
                 group_by,
@@ -138,6 +150,7 @@ class ExcelSheetsExporter:
                 file_path=str(out_path),
                 record_count=len(records),
                 success=True,
+                attachment_count=att_count,
             )
         except Exception as exc:  # noqa: BLE001
             logger.error("Excel sheets export failed: %s", exc)

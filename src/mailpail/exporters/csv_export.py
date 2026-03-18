@@ -8,6 +8,7 @@ import gzip
 import logging
 from pathlib import Path
 
+from mailpail.exporters.attachments import attachment_filenames, save_attachments
 from mailpail.models import EmailRecord, ExportConfig, ExportResult
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ _COLUMNS = [
     "body_text",
     "folder",
     "has_attachments",
+    "attachment_files",
     "message_id",
 ]
 
@@ -34,6 +36,7 @@ class CsvExporter:
         out_path = out_dir / f"{config.filename_prefix}.csv.gz"
 
         warnings: list[str] = []
+        att_count = 0
         try:
             with gzip.open(out_path, "wt", encoding="utf-8", newline="") as gz:
                 writer = csv.writer(gz)
@@ -50,9 +53,13 @@ class CsvExporter:
                             rec.body_text,
                             rec.folder,
                             rec.has_attachments,
+                            attachment_filenames(rec),
                             rec.message_id,
                         ]
                     )
+
+            if config.include_attachments:
+                att_count = save_attachments(records, out_dir)
 
             file_size = out_path.stat().st_size
             logger.info("CSV export complete: %d records, %s (%d bytes)", len(records), out_path, file_size)
@@ -63,6 +70,7 @@ class CsvExporter:
                 record_count=len(records),
                 success=True,
                 warnings=warnings,
+                attachment_count=att_count,
             )
         except Exception as exc:  # noqa: BLE001
             logger.error("CSV export failed: %s", exc)
