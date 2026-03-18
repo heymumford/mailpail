@@ -21,6 +21,9 @@ test-a:
 test-b:
     uv run python -m pytest -n auto --cache-clear -m tier_b tests/
 
+test-gui:
+    uv run python -m pytest --cache-clear -m gui tests/ --override-ini="addopts=-v --tb=short --ignore=tests/test_ui_integration.py"
+
 test-ci:
     mkdir -p reports
     uv run python -m pytest -n auto --cache-clear --junitxml=reports/junit.xml --cov=mailpail --cov-report=xml:reports/coverage.xml tests/

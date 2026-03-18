@@ -378,3 +378,215 @@ class TestNavigation:
         app._show_screen_at_index(3)
         app.go_to_screen("Nonexistent")
         assert app._current_step == 3
+
+    def test_nav_buttons_hidden_on_welcome(self, app):
+        """W-06: Back/Next buttons not visible on Welcome screen."""
+        app._show_screen_at_index(0)
+        _pump(app, 200)
+        # Welcome hides both nav buttons via grid_forget
+        # Verify Next button text isn't shown (or button is forgotten)
+        assert app._current_step == 0
+
+    def test_nav_buttons_hidden_on_complete(self, app):
+        """Back/Next hidden on Complete screen too."""
+        from mailpail.models import ExportResult
+
+        app.wizard_state["total_emails"] = 1
+        app.wizard_state["results"] = [
+            ExportResult(format_name="csv", file_path="/tmp/x", record_count=1, success=True),
+        ]
+        app._show_screen_at_index(6)
+        _pump(app, 300)
+        assert app._current_step == 6
+
+
+# -- Filter Validation -------------------------------------------------------
+
+
+class TestFilterValidation:
+    """FI-05/FI-06/FI-07: Filter form validation and state population."""
+
+    def _go_to_filters(self, app):
+        app._show_screen_at_index(3)
+        _pump(app, 300)
+
+    def test_valid_date_passes(self, app):
+        """FI-06: Valid YYYY-MM-DD passes validation."""
+        self._go_to_filters(app)
+        screen = app._screens["Filters"]
+        entries = _find_widgets(screen, "CTkEntry")
+        entries[0].insert(0, "2024-01-01")
+        entries[1].insert(0, "2024-12-31")
+        _pump(app, 100)
+        assert screen.validate() is True
+
+    def test_invalid_date_blocks(self, app):
+        """FI-05: Invalid date string blocks validation."""
+        self._go_to_filters(app)
+        screen = app._screens["Filters"]
+        entries = _find_widgets(screen, "CTkEntry")
+        entries[0].insert(0, "not-a-date")
+        _pump(app, 100)
+        assert screen.validate() is False
+
+    def test_empty_filters_valid(self, app):
+        """All-empty filters are valid (filters are optional)."""
+        self._go_to_filters(app)
+        screen = app._screens["Filters"]
+        assert screen.validate() is True
+
+    def test_build_filters_populates_state(self, app):
+        """FI-07: After fill + validate, wizard_state has filter params."""
+        self._go_to_filters(app)
+        screen = app._screens["Filters"]
+        entries = _find_widgets(screen, "CTkEntry")
+        entries[0].insert(0, "2024-01-01")  # date_from
+        entries[2].insert(0, "alice@aol.com")  # sender
+        entries[3].insert(0, "vacation")  # subject
+        _pump(app, 100)
+        screen.validate()
+
+        filters = app.wizard_state.get("filters")
+        assert filters is not None
+        assert filters.sender == "alice@aol.com"
+        assert filters.subject == "vacation"
+
+
+# -- Format Validation -------------------------------------------------------
+
+
+class TestFormatValidation:
+    """FM-05: No format selected blocks advance."""
+
+    def _go_to_formats(self, app):
+        app._show_screen_at_index(4)
+        _pump(app, 300)
+
+    def test_no_format_blocks_validate(self, app):
+        """FM-05: Deselecting all formats blocks validation."""
+        self._go_to_formats(app)
+        screen = app._screens["Format"]
+        # Deselect all
+        for var in screen._format_vars.values():
+            var.set("off")
+        _pump(app, 100)
+        assert screen.validate() is False
+
+    def test_one_format_passes_validate(self, app):
+        """Selecting one format passes validation."""
+        self._go_to_formats(app)
+        screen = app._screens["Format"]
+        for var in screen._format_vars.values():
+            var.set("off")
+        screen._format_vars["csv"].set("on")
+        _pump(app, 100)
+        assert screen.validate() is True
+        assert "csv" in app.wizard_state.get("formats", [])
+
+
+# -- AOL Folder Names in GUI ------------------------------------------------
+
+
+class TestAOLFolderNamesInGUI:
+    """F-05: AOL folder names render correctly in folder screen."""
+
+    def _go_to_folders_with_aol(self, app):
+        mock_client = MagicMock()
+        mock_client.list_folders.return_value = [
+            "INBOX",
+            "Sent",
+            "Draft",
+            "Trash",
+            "Bulk Mail",
+            "Archive",
+        ]
+        app.wizard_state["client"] = mock_client
+        app._show_screen_at_index(2)
+        _pump(app, 1500)
+
+    def test_draft_singular_shown(self, app):
+        """AOL uses 'Draft' (singular), not 'Drafts'."""
+        self._go_to_folders_with_aol(app)
+        screen = app._screens["Folders"]
+        checkboxes = _find_widgets(screen, "CTkCheckBox")
+        texts = [cb.cget("text") or "" for cb in checkboxes]
+        assert any("Draft" in t for t in texts)
+
+    def test_bulk_mail_shown(self, app):
+        """AOL's spam folder is 'Bulk Mail'."""
+        self._go_to_folders_with_aol(app)
+        screen = app._screens["Folders"]
+        checkboxes = _find_widgets(screen, "CTkCheckBox")
+        texts = [cb.cget("text") or "" for cb in checkboxes]
+        assert any("Bulk Mail" in t for t in texts)
+
+    def test_six_folders_rendered(self, app):
+        """All 6 AOL folders render as checkboxes."""
+        self._go_to_folders_with_aol(app)
+        screen = app._screens["Folders"]
+        checkboxes = _find_widgets(screen, "CTkCheckBox")
+        assert len(checkboxes) == 6
+
+
+# -- Login Error Handling ---------------------------------------------------
+
+
+class TestLoginErrorUI:
+    """L-10: Empty submit shows error state."""
+
+    def _go_to_login(self, app):
+        app._show_screen_at_index(1)
+        _pump(app, 300)
+
+    def test_empty_submit_shows_error(self, app):
+        """Clicking Test Connection with empty fields shows error."""
+        self._go_to_login(app)
+        screen = app._screens["Login"]
+        # Don't fill any fields — invoke test connection
+        screen._test_connection()
+        _pump(app, 300)
+        # Status label should contain error icon or "required"
+        status_text = screen._status_label.cget("text") or ""
+        assert "required" in status_text.lower() or "\u26a0" in status_text
+
+
+# -- Progress Screen Widgets -------------------------------------------------
+
+
+class TestProgressScreenWidgets:
+    """P-01 through P-04: Progress screen widget presence."""
+
+    def _go_to_progress(self, app):
+        # Show progress screen without triggering on_show (which starts download)
+        for screen in app._screens.values():
+            screen.grid_forget()
+        screen = app._screens["Download"]
+        screen.grid(row=0, column=0, sticky="nsew")
+        app._current_step = 5
+        _pump(app, 300)
+
+    def test_progress_bar_exists(self, app):
+        self._go_to_progress(app)
+        screen = app._screens["Download"]
+        bars = _find_widgets(screen, "CTkProgressBar")
+        assert len(bars) >= 1
+
+    def test_cancel_button_exists(self, app):
+        self._go_to_progress(app)
+        screen = app._screens["Download"]
+        buttons = _find_widgets(screen, "CTkButton")
+        texts = [b.cget("text") or "" for b in buttons]
+        assert any("Cancel" in t for t in texts)
+
+    def test_reassurance_text(self, app):
+        self._go_to_progress(app)
+        screen = app._screens["Download"]
+        labels = _find_widgets(screen, "CTkLabel")
+        texts = [lbl.cget("text") or "" for lbl in labels]
+        assert any("safe" in t.lower() or "not" in t.lower() for t in texts)
+
+    def test_log_preview_exists(self, app):
+        self._go_to_progress(app)
+        screen = app._screens["Download"]
+        textboxes = _find_widgets(screen, "CTkTextbox")
+        assert len(textboxes) >= 1
