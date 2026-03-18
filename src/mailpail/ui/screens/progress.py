@@ -254,11 +254,12 @@ class ProgressScreen(customtkinter.CTkFrame):
             )
             self._ui(self._append_log, "Export log written")
 
-            # Save incremental UIDs
-            from mailpail.exporters.incremental import save_exported_uids
+            # Save incremental UIDs only if all exports succeeded
+            if all(r.success for r in results):
+                from mailpail.exporters.incremental import save_exported_uids
 
-            exported_uids = {r.uid for r in all_records}
-            save_exported_uids(Path(output_dir), exported_uids)
+                exported_uids = {r.uid for r in all_records}
+                save_exported_uids(Path(output_dir), exported_uids)
 
             # Write manifest
             from mailpail.exporters.manifest import write_manifest

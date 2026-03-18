@@ -244,10 +244,11 @@ def _run_cli(args: argparse.Namespace) -> None:
                 username=args.username,
             )
 
-            # Save incremental UIDs
-            from mailpail.exporters.incremental import save_exported_uids
+            # Save incremental UIDs only if all exports succeeded
+            if not any_failure:
+                from mailpail.exporters.incremental import save_exported_uids
 
-            save_exported_uids(Path(config.output_dir), {r.uid for r in records})
+                save_exported_uids(Path(config.output_dir), {r.uid for r in records})
 
             # Write manifest
             from mailpail.exporters.manifest import write_manifest
