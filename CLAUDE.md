@@ -2,7 +2,7 @@
 
 ## Build
 - `just install` -- set up environment
-- `just test` -- run all tests parallel (100 tests)
+- `just test` -- run all tests parallel (140 tests)
 - `just test-a` -- tier A (must-pass features)
 - `just test-b` -- tier B (regression + fitness + persona)
 - `just lint` -- check code style
@@ -19,7 +19,7 @@
   - `cookie_auth.py` -- browser cookie detection
   - `models.py` -- EmailRecord, FilterParams, ExportConfig, ExportResult
   - `filters.py` -- client-side email filtering
-  - `exporters/` -- CSV, Excel, PDF exporters
+  - `exporters/` -- CSV, Excel, PDF, EML, MBOX exporters + attachments, manifest, zipper
   - `ui/` -- customtkinter wizard interface
     - `screens/` -- 7 wizard screens + BaseScreen skeleton
     - `theme.py` -- colors, fonts, icons (WCAG AA compliant)

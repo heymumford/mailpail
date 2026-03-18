@@ -203,17 +203,33 @@ def _run_cli(args: argparse.Namespace) -> None:
 
             print(f"\nExporting {len(records)} email(s)...\n")
             any_failure = False
+            results = []
 
             for fmt in config.formats:
                 exporter = get_exporter(fmt)
                 result = exporter.export(records, config)
+                results.append(result)
                 if result.success:
-                    print(f"  [{fmt}] {result.record_count} records -> {result.file_path}")
+                    att_info = f" ({result.attachment_count} attachments)" if result.attachment_count else ""
+                    print(f"  [{fmt}] {result.record_count} records -> {result.file_path}{att_info}")
                     for w in result.warnings:
                         print(f"    WARNING: {w}")
                 else:
                     print(f"  [{fmt}] FAILED: {result.error}")
                     any_failure = True
+
+            # Write manifest
+            from pathlib import Path
+
+            from mailpail.exporters.manifest import write_manifest
+            from mailpail.exporters.zipper import zip_export
+
+            manifest_path = write_manifest(Path(config.output_dir), results, len(records))
+            print(f"\n  Manifest: {manifest_path}")
+
+            # Zip everything
+            zip_path = zip_export(Path(config.output_dir))
+            print(f"  Zip: {zip_path}")
 
             print()
             if any_failure:

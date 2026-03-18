@@ -39,6 +39,18 @@ _FORMAT_OPTIONS: list[dict[str, str]] = [
         "title": "PDF Document",
         "description": "Easy to read and share",
     },
+    {
+        "key": "mbox",
+        "icon": "\U0001f4e6",
+        "title": "MBOX Archive",
+        "description": "Standard email archive format",
+    },
+    {
+        "key": "eml",
+        "icon": "\U0001f4e7",
+        "title": "EML Files",
+        "description": "One file per email, with attachments",
+    },
 ]
 
 

@@ -23,6 +23,7 @@ EXPECTED_HEADERS = [
     "Body",
     "Folder",
     "Attachments",
+    "Attachment Files",
     "Message-ID",
 ]
 

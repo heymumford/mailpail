@@ -13,17 +13,17 @@ format:
     uv run ruff check --fix src/ tests/
 
 test:
-    uv run pytest -n auto --cache-clear tests/
+    uv run python -m pytest -n auto --cache-clear tests/
 
 test-a:
-    uv run pytest -n auto --cache-clear -m tier_a tests/
+    uv run python -m pytest -n auto --cache-clear -m tier_a tests/
 
 test-b:
-    uv run pytest -n auto --cache-clear -m tier_b tests/
+    uv run python -m pytest -n auto --cache-clear -m tier_b tests/
 
 test-ci:
     mkdir -p reports
-    uv run pytest -n auto --cache-clear --junitxml=reports/junit.xml --cov=mailpail --cov-report=xml:reports/coverage.xml tests/
+    uv run python -m pytest -n auto --cache-clear --junitxml=reports/junit.xml --cov=mailpail --cov-report=xml:reports/coverage.xml tests/
 
 build-exe:
     uv run pyinstaller --onefile --name mailpail --windowed src/mailpail/__main__.py

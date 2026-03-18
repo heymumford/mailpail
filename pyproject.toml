@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mailpail"
-version = "0.1.0"
+version = "0.2.0"
 description = "Download and export your email to PDF, Excel, and compressed CSV"
 license = "GPL-3.0-or-later"
 requires-python = ">=3.12"
@@ -47,6 +47,9 @@ mailpail = "mailpail.__main__:main"
 
 [project.gui-scripts]
 mailpail-gui = "mailpail.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mailpail"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

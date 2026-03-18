@@ -147,6 +147,11 @@ class CompleteScreen(customtkinter.CTkFrame):
                 if r.error:
                     lines.append(f"       Error: {r.error}")
 
+        zip_path = state.get("zip_path", "")
+        if zip_path and os.path.isfile(zip_path):
+            size_mb = os.path.getsize(zip_path) / (1024 * 1024)
+            lines.append(f"\n{ICONS['complete']}  Zip archive: {os.path.basename(zip_path)} ({size_mb:.1f} MB)")
+
         if output_dir:
             lines.append(f"\nSaved to: {output_dir}")
 
