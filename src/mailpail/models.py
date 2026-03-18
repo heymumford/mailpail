@@ -57,7 +57,7 @@ class ExportConfig:
     output_dir: str = "./export"
     formats: tuple[str, ...] = ("csv",)
     excel_group_by: str = "folder"
-    pdf_title: str = "Mailpail Export"
+    pdf_title: str = "Mailpail Export"  # sourced from strings.APP_NAME at call sites
     filename_prefix: str = "mail_export"
     include_attachments: bool = True
 
