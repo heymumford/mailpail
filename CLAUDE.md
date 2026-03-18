@@ -2,7 +2,8 @@
 
 ## Build
 - `just install` -- set up environment
-- `just test` -- run all tests parallel (217 tests)
+- `just test` -- run logic tests parallel (217 tests)
+- `just test-gui` -- run GUI widget tests (49 tests, needs tkinter)
 - `just test-a` -- tier A (must-pass features)
 - `just test-b` -- tier B (regression + fitness + persona)
 - `just lint` -- check code style
