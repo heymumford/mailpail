@@ -11,14 +11,19 @@ import customtkinter
 
 from mailpail.providers import DEFAULT_PROVIDER, PROVIDERS, ProviderDescriptor
 from mailpail.ui.strings import (
+    APP_PASSWORD_DEFAULT,
+    APP_PASSWORD_SETUP,
+    LOGIN_AUTH_FAILED,
     LOGIN_BOTH_REQUIRED,
     LOGIN_CONNECTED,
     LOGIN_CONNECTING,
     LOGIN_HELP_LINK,
+    LOGIN_NETWORK_FAILED,
     LOGIN_SESSION_DETECTED,
     LOGIN_SESSION_FOUND,
     LOGIN_TEST_CONNECTION,
     LOGIN_TITLE,
+    LOGIN_UNKNOWN_FAILED,
     LOGIN_USE_SESSION,
     REASSURANCE_READONLY,
 )
@@ -167,6 +172,18 @@ class LoginScreen(customtkinter.CTkFrame):
         )
         self._password_entry.pack(padx=24, pady=(0, 8), fill="x")
 
+        # App password setup instructions (updates per provider)
+        self._setup_label = customtkinter.CTkLabel(
+            form_card,
+            text=APP_PASSWORD_SETUP.get(self._provider_key, APP_PASSWORD_DEFAULT),
+            font=FONTS["small"],
+            text_color=COLORS["fg"],
+            wraplength=500,
+            justify="left",
+            anchor="w",
+        )
+        self._setup_label.pack(padx=24, pady=(4, 8), anchor="w", fill="x")
+
         # Help link
         self._help_link = customtkinter.CTkLabel(
             form_card,
@@ -238,11 +255,14 @@ class LoginScreen(customtkinter.CTkFrame):
         self._detected_session = None
 
     def _on_provider_changed(self, choice: str) -> None:
-        """Update internal state when provider dropdown changes."""
+        """Update internal state and setup instructions when provider changes."""
         for key, desc in PROVIDERS.items():
             if desc.name == choice:
                 self._provider_key = key
                 self._app.wizard_state["provider_key"] = key
+                # Update setup instructions for the selected provider
+                setup_text = APP_PASSWORD_SETUP.get(key, APP_PASSWORD_DEFAULT)
+                self._setup_label.configure(text=setup_text)
                 break
 
     def _open_help(self) -> None:
@@ -345,10 +365,19 @@ class LoginScreen(customtkinter.CTkFrame):
         self._app.enable_next()
 
     def _on_connection_failure(self, error_msg: str) -> None:
-        """Update UI after failed connection (runs on main thread)."""
+        """Update UI after failed connection with helpful guidance."""
         self._testing = False
         self._test_btn.configure(state="normal", text=LOGIN_TEST_CONNECTION)
-        display_msg = error_msg if len(error_msg) < 200 else error_msg[:200] + "..."
+
+        # Categorize the error for user-friendly display
+        error_lower = error_msg.lower()
+        if "authentication" in error_lower or "credentials" in error_lower or "login" in error_lower:
+            display_msg = LOGIN_AUTH_FAILED
+        elif "refused" in error_lower or "timeout" in error_lower or "reach" in error_lower:
+            display_msg = LOGIN_NETWORK_FAILED
+        else:
+            display_msg = LOGIN_UNKNOWN_FAILED
+
         self._status_label.configure(
             text=f"{ICONS['error']} {display_msg}",
             text_color=COLORS["error"],

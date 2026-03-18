@@ -33,7 +33,7 @@ LOGIN_EMAIL_LABEL = "Email Address"
 LOGIN_EMAIL_PLACEHOLDER = "your.email@example.com"
 LOGIN_PASSWORD_LABEL = "App Password"
 LOGIN_PASSWORD_PLACEHOLDER = "App Password"
-LOGIN_HELP_LINK = "Need an app password? Check your provider's settings \u2197"
+LOGIN_HELP_LINK = "How do I get an app password? \u2197"
 LOGIN_TEST_CONNECTION = "Test Connection"
 LOGIN_CONNECTING = "Connecting..."
 LOGIN_CONNECTED = "\u2705 Connected successfully!"
@@ -41,6 +41,54 @@ LOGIN_SESSION_FOUND = "\u2705 We found your session in {browser}! Email: {userna
 LOGIN_USE_SESSION = "Use This Account"
 LOGIN_SESSION_DETECTED = "Session detected \u2014 enter your app password to connect."
 LOGIN_BOTH_REQUIRED = "Please enter both email and password."
+
+# Per-provider app password setup instructions (shown inline on login screen)
+APP_PASSWORD_SETUP: dict[str, str] = {
+    "aol": (
+        "Your regular password won't work here.\n"
+        'You need a special "app password" from AOL:\n'
+        "1. Go to AOL Account Security (link below)\n"
+        "2. Turn on 2-step verification (if not already on)\n"
+        '3. Click "Generate app password"\n'
+        '4. Name it "Mailpail" and copy the password'
+    ),
+    "gmail": (
+        "Your regular password won't work here.\n"
+        'You need a special "app password" from Google:\n'
+        "1. Go to Google App Passwords (link below)\n"
+        "2. You must have 2-step verification turned on\n"
+        "3. Create a new app password\n"
+        "4. Copy the 16-character password"
+    ),
+    "outlook": (
+        "Your regular password won't work here.\n"
+        'You need a special "app password" from Microsoft:\n'
+        "1. Go to Microsoft Security (link below)\n"
+        "2. Turn on 2-step verification (if not already on)\n"
+        "3. Create a new app password\n"
+        "4. Copy the password"
+    ),
+    "yahoo": (
+        "Your regular password won't work here.\n"
+        'You need a special "app password" from Yahoo:\n'
+        "1. Go to Yahoo Account Security (link below)\n"
+        "2. Turn on 2-step verification (if not already on)\n"
+        '3. Click "Generate app password"\n'
+        "4. Copy the password"
+    ),
+    "imap": "Enter the password for your email account.",
+}
+APP_PASSWORD_DEFAULT = "Enter the app password for your email account."
+
+# Auth failure messages
+LOGIN_AUTH_FAILED = (
+    "Could not sign in. This usually means:\n"
+    "\u2022 You used your regular password instead of an app password\n"
+    "\u2022 The app password was typed incorrectly\n\n"
+    "Click the link below to set up an app password."
+)
+LOGIN_NETWORK_FAILED = "Could not reach the email server. Check your internet connection."
+LOGIN_UNKNOWN_FAILED = "Something went wrong. Check your email address and password."
 
 # -- Folders screen ----------------------------------------------------------
 
