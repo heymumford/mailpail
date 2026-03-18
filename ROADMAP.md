@@ -1,7 +1,7 @@
 # Mailpail Product Roadmap
 
 **Last updated:** 2026-03-18
-**Version:** 0.3.0 (Alpha)
+**Version:** 0.4.0 (Beta)
 **License:** GPL-3.0-or-later
 
 ## North Star
@@ -189,20 +189,22 @@ Based on competitive analysis and user expectations for email export tools:
 | 2.7 | Dark mode palette (WCAG AA verified, `COLORS_DARK`, `get_colors()`) | Done |
 | 2.8 | CI: PyPI publish workflow in release.yml | Done |
 
-### Phase 3: Professional & Legal Use (v0.4.0)
+### Phase 3: Professional & Legal Use (COMPLETE)
 
-**Goal:** Sandra can use Mailpail for eDiscovery preparation. Derek can script batch exports.
+**Delivered:** v0.4.0. 216 tests green.
 
-| # | Item | Priority | Rationale |
-|---|------|----------|-----------|
-| 3.1 | **Batch export (multiple accounts, one run)** | P1 | Derek manages 10+ client accounts. CSV of credentials → batch run. |
-| 3.2 | **PST export** | P1 | Outlook PST is the lingua franca of eDiscovery |
-| 3.3 | **OAuth PKCE browser flow** | P1 | Gmail deprecating app passwords. First plugin candidate: `mailpail-gmail-oauth` |
-| 3.4 | **Scheduled/recurring backup** | P2 | Daemon or cron mode: `mailpail --schedule weekly`. Lowest-friction retention. |
-| 3.5 | **Multi-account in single GUI session** | P2 | Ray has Yahoo + Gmail, wants one export session |
-| 3.6 | **Exporter plugin entry point group** | P1 | `mailpail.exporters` parallel to `mailpail.providers` |
+| # | Item | Status |
+|---|------|--------|
+| 3.1 | Batch export (`--batch accounts.csv` — multiple accounts, one run) | Done |
+| 3.2 | PST export | Deferred (requires pypst dependency; not on critical path) |
+| 3.3 | OAuth PKCE browser flow | Blocked (AOL/Yahoo don't grant new OAuth2 registrations) |
+| 3.4 | Scheduled/recurring backup | Deferred (daemon mode is scope creep for MVP) |
+| 3.5 | Multi-account in single GUI session | Deferred (batch CLI covers Derek's use case) |
+| 3.6 | Exporter plugin entry point group (`mailpail.exporters`) | Done |
 
-**Exit criteria:** Sandra produces a timestamped, hashed, filtered export for a court case. Derek scripts a 5-account batch export.
+**Also fixed:**
+- T2: Progress dots use grid instead of place()
+- `available_formats()` helper for plugin-aware format discovery
 
 ### Phase 4: Community & Growth (v1.0.0)
 

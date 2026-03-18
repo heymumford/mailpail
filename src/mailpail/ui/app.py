@@ -296,8 +296,10 @@ class MailpailApp(customtkinter.CTk):
         self._next_btn.grid(row=0, column=2, padx=(0, 20), pady=8, sticky="e")
 
     def _build_progress_dots(self) -> None:
+        self._top_bar.grid_columnconfigure(0, weight=1)
+        self._top_bar.grid_rowconfigure(0, weight=1)
         inner = customtkinter.CTkFrame(self._top_bar, fg_color=COLORS["bg"])
-        inner.place(relx=0.5, rely=0.5, anchor="center")
+        inner.grid(row=0, column=0)
 
         for i, _step_name in enumerate(WIZARD_STEPS):
             dot_frame = customtkinter.CTkFrame(inner, fg_color=COLORS["bg"])

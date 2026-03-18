@@ -3,9 +3,14 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Protocol, runtime_checkable
 
 from mailpail.models import EmailRecord, ExportConfig, ExportResult
+
+logger = logging.getLogger(__name__)
+
+EXPORTER_ENTRY_POINT_GROUP = "mailpail.exporters"
 
 
 @runtime_checkable
@@ -33,6 +38,25 @@ def _load_exporters() -> dict[str, type]:
     }
 
 
+def _load_plugin_exporters() -> dict[str, type]:
+    """Discover third-party exporter plugins via entry points."""
+    import importlib.metadata
+
+    plugins: dict[str, type] = {}
+    try:
+        eps = importlib.metadata.entry_points(group=EXPORTER_ENTRY_POINT_GROUP)
+        for ep in eps:
+            try:
+                cls = ep.load()
+                plugins[ep.name] = cls
+                logger.info("Loaded exporter plugin: %s (%s)", ep.name, ep.value)
+            except Exception:
+                logger.warning("Failed to load exporter plugin: %s", ep.name, exc_info=True)
+    except Exception:
+        pass
+    return plugins
+
+
 EXPORTERS: dict[str, type] = {}
 
 
@@ -44,8 +68,18 @@ def get_exporter(format_name: str) -> BaseExporter:
     global EXPORTERS  # noqa: PLW0603
     if not EXPORTERS:
         EXPORTERS.update(_load_exporters())
+        EXPORTERS.update(_load_plugin_exporters())
 
     cls = EXPORTERS.get(format_name)
     if cls is None:
         raise KeyError(f"Unknown export format '{format_name}'. Available: {', '.join(sorted(EXPORTERS))}")
     return cls()
+
+
+def available_formats() -> list[str]:
+    """Return sorted list of all registered export format names."""
+    global EXPORTERS  # noqa: PLW0603
+    if not EXPORTERS:
+        EXPORTERS.update(_load_exporters())
+        EXPORTERS.update(_load_plugin_exporters())
+    return sorted(EXPORTERS.keys())
