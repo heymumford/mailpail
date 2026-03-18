@@ -27,26 +27,27 @@ def save_attachments(records: list[EmailRecord], output_dir: Path) -> int:
     """Save all attachments from *records* into output_dir/attachments/.
 
     Files are organized as: attachments/{uid}_{filename}
+    Idempotent — skips files that already exist (safe for multi-format runs).
     Returns total number of attachments saved.
     """
     att_dir = output_dir / "attachments"
+    has_atts = any(rec.attachments for rec in records)
+    if not has_atts:
+        return 0
+
+    att_dir.mkdir(parents=True, exist_ok=True)
     count = 0
 
     for rec in records:
         if not rec.attachments:
             continue
         for att in rec.attachments:
-            att_dir.mkdir(parents=True, exist_ok=True)
             safe = _safe_name(att.filename)
             dest = att_dir / f"{rec.uid}_{safe}"
-            # Deduplicate if same name exists
+            # Skip if already written (idempotent for multi-format runs)
             if dest.exists():
-                stem = dest.stem
-                suffix = dest.suffix
-                n = 1
-                while dest.exists():
-                    dest = att_dir / f"{stem}_{n}{suffix}"
-                    n += 1
+                count += 1
+                continue
             dest.write_bytes(att.payload)
             count += 1
 
