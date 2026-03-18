@@ -53,8 +53,10 @@ def load_batch_file(path: Path) -> list[BatchEntry]:
             raise ValueError("Batch CSV must have 'username' and 'password' columns")
 
         for row_num, row in enumerate(reader, start=2):
-            username = row.get("username", "").strip()
-            password = row.get("password", "").strip()
+            # Normalize keys to lowercase for case-insensitive header matching
+            norm = {k.strip().lower(): v for k, v in row.items() if k is not None}
+            username = norm.get("username", "").strip()
+            password = norm.get("password", "").strip()
 
             if not username or not password:
                 logger.warning("Skipping row %d: missing username or password", row_num)
@@ -64,9 +66,9 @@ def load_batch_file(path: Path) -> list[BatchEntry]:
                 BatchEntry(
                     username=username,
                     password=password,
-                    provider=row.get("provider", "aol").strip() or "aol",
-                    folder=row.get("folder", "INBOX").strip() or "INBOX",
-                    format=row.get("format", "csv").strip() or "csv",
+                    provider=norm.get("provider", "aol").strip() or "aol",
+                    folder=norm.get("folder", "INBOX").strip() or "INBOX",
+                    format=norm.get("format", "csv").strip() or "csv",
                 )
             )
 

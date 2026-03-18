@@ -52,10 +52,12 @@ class TestBatchCLIFlag:
 class TestProgressDotsGrid:
     """T2 tech debt: progress dots should use grid, not place()."""
 
-    def test_no_place_in_app(self):
-        from pathlib import Path
+    def test_progress_dots_use_grid(self):
+        """_build_progress_dots must use grid(), not place(), for centering."""
+        import inspect
 
-        app_path = Path(__file__).resolve().parents[2] / "src" / "mailpail" / "ui" / "app.py"
-        content = app_path.read_text()
-        # place() should no longer be used for centering
-        assert ".place(" not in content, "app.py still uses place() — should use grid"
+        from mailpail.ui.app import MailpailApp
+
+        source = inspect.getsource(MailpailApp._build_progress_dots)
+        assert ".place(" not in source, "_build_progress_dots still uses place()"
+        assert ".grid(" in source, "_build_progress_dots should use grid()"

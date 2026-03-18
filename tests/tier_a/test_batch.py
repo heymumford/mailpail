@@ -72,6 +72,15 @@ class TestBatchFileLoading:
         assert entries[0].folder == "INBOX"
         assert entries[0].format == "csv"
 
+    def test_case_insensitive_headers(self, tmp_path):
+        csv_file = tmp_path / "caps.csv"
+        csv_file.write_text("Username,Password,Provider\nuser@aol.com,pass,gmail\n")
+
+        entries = load_batch_file(csv_file)
+        assert len(entries) == 1
+        assert entries[0].username == "user@aol.com"
+        assert entries[0].provider == "gmail"
+
     def test_batch_entry_frozen(self):
         entry = BatchEntry(username="u", password="p")
         with pytest.raises(AttributeError):
