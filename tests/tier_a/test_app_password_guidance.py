@@ -52,12 +52,19 @@ class TestAppPasswordSetupStrings:
         for key in PROVIDERS:
             assert key in APP_PASSWORD_SETUP, f"Provider '{key}' missing from APP_PASSWORD_SETUP"
 
-    def test_setup_instructions_mention_regular_password_wont_work(self):
-        """AOL setup instructions explicitly say regular password won't work."""
+    def test_setup_instructions_say_try_regular_first(self):
+        """AOL setup instructions say try regular password first."""
         from mailpail.ui.strings import APP_PASSWORD_SETUP
 
         aol_text = APP_PASSWORD_SETUP["aol"].lower()
-        assert "regular password" in aol_text or "won't work" in aol_text
+        assert "regular" in aol_text or "try" in aol_text
+
+    def test_setup_instructions_handle_generation_failure(self):
+        """AOL instructions mention what to do when app passwords can't be generated."""
+        from mailpail.ui.strings import APP_PASSWORD_SETUP
+
+        aol_text = APP_PASSWORD_SETUP["aol"].lower()
+        assert "can't be generated" in aol_text or "wait" in aol_text
 
     def test_setup_instructions_are_step_by_step(self):
         """AOL instructions have numbered steps."""
@@ -110,7 +117,6 @@ class TestAuthFailureMessages:
 
         text = LOGIN_AUTH_FAILED.lower()
         assert "app password" in text
-        assert "regular password" in text
 
     def test_network_failed_message_mentions_connection(self):
         from mailpail.ui.strings import LOGIN_NETWORK_FAILED
@@ -156,18 +162,17 @@ class TestAuthFailureMessages:
 class TestPasswordFieldLabel:
     """The password field says 'App Password', not 'Password'."""
 
-    def test_password_label_says_app_password(self):
+    def test_password_label_says_password(self):
         from mailpail.ui.strings import LOGIN_PASSWORD_LABEL
 
-        assert "app" in LOGIN_PASSWORD_LABEL.lower()
         assert "password" in LOGIN_PASSWORD_LABEL.lower()
 
-    def test_password_placeholder_says_app_password(self):
+    def test_password_placeholder_accepts_both(self):
         from mailpail.ui.strings import LOGIN_PASSWORD_PLACEHOLDER
 
-        assert "app" in LOGIN_PASSWORD_PLACEHOLDER.lower()
+        assert "password" in LOGIN_PASSWORD_PLACEHOLDER.lower()
 
-    def test_help_link_mentions_app_password(self):
+    def test_help_link_offers_help(self):
         from mailpail.ui.strings import LOGIN_HELP_LINK
 
-        assert "app password" in LOGIN_HELP_LINK.lower()
+        assert "help" in LOGIN_HELP_LINK.lower() or "not working" in LOGIN_HELP_LINK.lower()

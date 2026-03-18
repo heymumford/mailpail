@@ -56,41 +56,64 @@ class IMAPClient:
     # -- Connection -------------------------------------------------------
 
     def connect(self) -> None:
-        """Establish a connection and authenticate."""
-        logger.info("Connecting to %s:%d as %s (ssl=%s)", self._server, self._port, self._username, self._use_ssl)
+        """Establish a connection and authenticate.
+
+        For AOL: tries the configured server first. If auth fails on
+        export.imap.aol.com, retries on imap.aol.com (regular passwords
+        may only work on the standard server).
+        """
+        exc = self._try_connect(self._server, self._port)
+        if exc is None:
+            return
+
+        # AOL fallback: export server may reject regular passwords
+        if self._server == "export.imap.aol.com":
+            logger.info("Retrying on imap.aol.com (regular password may work there)")
+            fallback_exc = self._try_connect("imap.aol.com", 993)
+            if fallback_exc is None:
+                self._server = "imap.aol.com"
+                return
+
+        self._raise_connection_error(exc)
+
+    def _try_connect(self, server: str, port: int) -> Exception | None:
+        """Attempt connection. Returns None on success, exception on failure."""
+        logger.info("Connecting to %s:%d as %s (ssl=%s)", server, port, self._username, self._use_ssl)
         try:
             if self._use_ssl:
-                self._mailbox = MailBox(self._server, self._port)
+                self._mailbox = MailBox(server, port)
             else:
-                self._mailbox = MailBoxUnencrypted(self._server, self._port)
+                self._mailbox = MailBoxUnencrypted(server, port)
             self._mailbox.login(self._username, self._password)
-            logger.info("Connected successfully")
+            logger.info("Connected successfully to %s:%d", server, port)
+            return None
         except Exception as exc:
-            error_str = str(exc).lower()
-            if "authentication" in error_str or "login" in error_str or "credentials" in error_str:
-                msg = (
-                    f"Authentication failed for {self._username} on {self._server}:{self._port} — "
-                    "verify your app password (not your regular password). "
-                    "Check your email provider's app password settings."
-                )
-            elif "ssl" in error_str or "tls" in error_str or "handshake" in error_str:
-                msg = (
-                    f"SSL/TLS connection failed to {self._server}:{self._port} — "
-                    "verify the server address and port are correct."
-                )
-            elif "refused" in error_str or "timeout" in error_str or "resolve" in error_str:
-                msg = (
-                    f"Could not reach {self._server}:{self._port} — "
-                    "check your internet connection and verify the server address."
-                )
-            else:
-                msg = (
-                    f"Failed to connect to {self._server}:{self._port} — "
-                    "verify your app password and server settings. "
-                    f"Detail: {exc}"
-                )
-            logger.error(msg)
-            raise ConnectionError(msg) from exc
+            self._mailbox = None
+            return exc
+
+    def _raise_connection_error(self, exc: Exception) -> None:
+        """Raise a ConnectionError with a user-friendly message."""
+        error_str = str(exc).lower()
+        if "authentication" in error_str or "login" in error_str or "credentials" in error_str:
+            msg = (
+                f"Authentication failed for {self._username} — "
+                "check your password. If your regular password didn't work, "
+                "you may need an app password from your email provider."
+            )
+        elif "ssl" in error_str or "tls" in error_str or "handshake" in error_str:
+            msg = (
+                f"SSL/TLS connection failed to {self._server}:{self._port} — "
+                "verify the server address and port are correct."
+            )
+        elif "refused" in error_str or "timeout" in error_str or "resolve" in error_str:
+            msg = (
+                f"Could not reach {self._server}:{self._port} — "
+                "check your internet connection and verify the server address."
+            )
+        else:
+            msg = f"Failed to connect to {self._server}:{self._port} — check your email and password. Detail: {exc}"
+        logger.error(msg)
+        raise ConnectionError(msg) from exc
 
     def disconnect(self) -> None:
         """Log out and close the connection."""

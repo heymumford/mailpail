@@ -31,9 +31,9 @@ WELCOME_GET_STARTED = "Get Started"
 LOGIN_TITLE = "Sign In"
 LOGIN_EMAIL_LABEL = "Email Address"
 LOGIN_EMAIL_PLACEHOLDER = "your.email@example.com"
-LOGIN_PASSWORD_LABEL = "App Password"
-LOGIN_PASSWORD_PLACEHOLDER = "App Password"
-LOGIN_HELP_LINK = "How do I get an app password? \u2197"
+LOGIN_PASSWORD_LABEL = "Password"
+LOGIN_PASSWORD_PLACEHOLDER = "Password or App Password"
+LOGIN_HELP_LINK = "Password not working? Get help \u2197"
 LOGIN_TEST_CONNECTION = "Test Connection"
 LOGIN_CONNECTING = "Connecting..."
 LOGIN_CONNECTED = "\u2705 Connected successfully!"
@@ -45,12 +45,14 @@ LOGIN_BOTH_REQUIRED = "Please enter both email and password."
 # Per-provider app password setup instructions (shown inline on login screen)
 APP_PASSWORD_SETUP: dict[str, str] = {
     "aol": (
-        "Your regular password won't work here.\n"
-        'You need a special "app password" from AOL:\n'
+        "Try your regular AOL password first.\n"
+        "If that doesn't work, you need an app password:\n"
         "1. Go to AOL Account Security (link below)\n"
-        "2. Turn on 2-step verification (if not already on)\n"
+        "2. Turn on 2-step verification\n"
         '3. Click "Generate app password"\n'
-        '4. Name it "Mailpail" and copy the password'
+        '4. Name it "Mailpail" and copy the password\n\n'
+        "If AOL says app passwords can't be generated,\n"
+        "wait a few hours and try again."
     ),
     "gmail": (
         "Your regular password won't work here.\n"
@@ -82,10 +84,11 @@ APP_PASSWORD_DEFAULT = "Enter the app password for your email account."
 
 # Auth failure messages
 LOGIN_AUTH_FAILED = (
-    "Could not sign in. This usually means:\n"
-    "\u2022 You used your regular password instead of an app password\n"
-    "\u2022 The app password was typed incorrectly\n\n"
-    "Click the link below to set up an app password."
+    "Could not sign in. Try these steps:\n"
+    "\u2022 Double-check your email address and password\n"
+    "\u2022 If your regular password didn't work, you may need an app password\n"
+    "\u2022 Click the link below for setup instructions\n"
+    "\u2022 If AOL says app passwords can't be generated, wait a few hours"
 )
 LOGIN_NETWORK_FAILED = "Could not reach the email server. Check your internet connection."
 LOGIN_UNKNOWN_FAILED = "Something went wrong. Check your email address and password."

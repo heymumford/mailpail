@@ -156,7 +156,7 @@ class LoginScreen(customtkinter.CTkFrame):
         # Password field
         customtkinter.CTkLabel(
             form_card,
-            text="App Password",
+            text="Password",
             font=FONTS["label"],
             text_color=COLORS["fg"],
             anchor="w",
@@ -164,7 +164,7 @@ class LoginScreen(customtkinter.CTkFrame):
 
         self._password_entry = customtkinter.CTkEntry(
             form_card,
-            placeholder_text="App Password",
+            placeholder_text="Password or App Password",
             font=FONTS["body"],
             show="*",
             height=44,
