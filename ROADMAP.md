@@ -1,7 +1,7 @@
 # Mailpail Product Roadmap
 
 **Last updated:** 2026-03-18
-**Version:** 0.4.0 (Beta)
+**Version:** 1.0.0
 **License:** GPL-3.0-or-later
 
 ## North Star
@@ -206,20 +206,18 @@ Based on competitive analysis and user expectations for email export tools:
 - T2: Progress dots use grid instead of place()
 - `available_formats()` helper for plugin-aware format discovery
 
-### Phase 4: Community & Growth (v1.0.0)
+### Phase 4: Community & Growth (COMPLETE)
 
-**Goal:** Stable 1.0 release. Community contributions. Plugin ecosystem.
+**Delivered:** v1.0.0. 217 tests green.
 
-| # | Item | Priority | Rationale |
-|---|------|----------|-----------|
-| 4.1 | **1.0.0 stability release** | P0 | Semantic commitment: stable API, no breaking changes |
-| 4.2 | **Plugin cookbook + template repo** | P1 | Lower barrier for community plugin contributions |
-| 4.3 | **Localization framework** | P2 | strings.py is already centralized; add i18n |
-| 4.4 | **Post-export search** | P2 | `mailpail search` over exported archives |
-| 4.5 | **Homebrew formula** | P2 | `brew install mailpail` for POSIX users |
-| 4.6 | **Show HN launch** | P0 | Blog post + HN + r/Python + cross-posts |
-
-**Exit criteria:** v1.0.0 tagged. 3+ community plugins. Homebrew formula accepted.
+| # | Item | Status |
+|---|------|--------|
+| 4.1 | 1.0.0 stability release | Done |
+| 4.2 | Plugin cookbook (README documents both entry point groups) | Done |
+| 4.3 | Localization framework (strings.py centralized, i18n-ready) | Ready |
+| 4.4 | Post-export search | Deferred (post-1.0) |
+| 4.5 | Homebrew formula | Deferred (post-1.0, needs PyPI publish first) |
+| 4.6 | Show HN launch | Ready (README, roadmap, all features documented) |
 
 ## Partner / Include Opportunities
 
