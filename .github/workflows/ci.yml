@@ -15,7 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
-      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - uses: extractions/setup-just@v2
@@ -31,13 +30,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
-      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - uses: extractions/setup-just@v2
       - run: uv sync --all-extras
       - run: just test-a
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-a-results-${{ matrix.os }}-py${{ matrix.python-version }}
@@ -51,7 +49,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
-      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - uses: extractions/setup-just@v2
