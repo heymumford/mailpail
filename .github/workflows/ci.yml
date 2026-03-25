@@ -52,5 +52,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - uses: extractions/setup-just@v2
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y python3-tk
       - run: uv sync --all-extras
       - run: just test-b
